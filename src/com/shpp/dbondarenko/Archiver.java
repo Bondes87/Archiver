@@ -22,13 +22,15 @@ public class Archiver {
             System.out.println(entry.getKey() + ": " + entry.getValue());
             count += entry.getValue();
         }
-       /* System.out.println(bytesFrequencyOfFile.size());
-        System.out.println(count);*/
+        System.out.println(bytesFrequencyOfFile.size());
+        System.out.println(count);
         HashMap<Byte, Integer> sortedBytesFrequency = sortByValue(bytesFrequencyOfFile);
         for (Map.Entry<Byte, Integer> entry : sortedBytesFrequency.entrySet()) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
         }
     }
+
+
 
     private HashMap<Byte, Integer> countBytesFrequency(byte[] bytesFromFile) {
         HashMap<Byte, Integer> bytesFrequencyOfFile = new HashMap<>();
