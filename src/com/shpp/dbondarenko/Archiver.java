@@ -16,20 +16,47 @@ public class Archiver {
     }
 
     private void fileArchiving(byte[] bytesFromFile) {
-        HashMap<Byte, Integer> bytesFrequencyOfFile = countBytesFrequency(bytesFromFile);
+        ArrayList<HafmannTreeNode> treeLeaves = createHafmannTreeLeaves(bytesFromFile);
+        for (HafmannTreeNode leaf : treeLeaves) {
+            System.out.println(leaf);
+        }
+        HafmannTreeNode hafmannTreeNode = buildHuffmanTree(treeLeaves);
+        /*HashMap<Byte, Integer> bytesFrequencyOfFile = countBytesFrequency(bytesFromFile);
+        HafmannTreeNode hafmannTreeNode = buildHuffmanTree(bytesFrequencyOfFile);
         int count = 0;
         for (Map.Entry<Byte, Integer> entry : bytesFrequencyOfFile.entrySet()) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
             count += entry.getValue();
         }
-        System.out.println(bytesFrequencyOfFile.size());
-        System.out.println(count);
+       *//* System.out.println(bytesFrequencyOfFile.size());
+        System.out.println(count);*//*
         HashMap<Byte, Integer> sortedBytesFrequency = sortByValue(bytesFrequencyOfFile);
         for (Map.Entry<Byte, Integer> entry : sortedBytesFrequency.entrySet()) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
-        }
+        }*/
     }
 
+    private HafmannTreeNode buildHuffmanTree(ArrayList<HafmannTreeNode> treeLeaves) {
+
+        return null;
+    }
+
+    private ArrayList<HafmannTreeNode> createHafmannTreeLeaves(byte[] bytesFromFile) {
+        HashMap<Byte, HafmannTreeNode> treeLeavesMap = new HashMap<>();
+        for (byte oneByte : bytesFromFile) {
+            if (treeLeavesMap.containsKey(oneByte)) {
+                treeLeavesMap.get(oneByte).setFrequency(treeLeavesMap.get
+                        (oneByte).getFrequency() + 1);
+            } else {
+                ArrayList<Byte> bytes = new ArrayList<>();
+                bytes.add(oneByte);
+                treeLeavesMap.put(oneByte, new HafmannTreeNode(bytes, 1, null, null));
+            }
+        }
+        ArrayList<HafmannTreeNode> treeLeaves = new ArrayList<>(treeLeavesMap.values());
+        Collections.sort(treeLeaves);
+        return treeLeaves;
+    }
 
 
     private HashMap<Byte, Integer> countBytesFrequency(byte[] bytesFromFile) {
@@ -44,9 +71,11 @@ public class Archiver {
         return bytesFrequencyOfFile;
     }
 
-    private HashMap<Byte, Integer> sortByValue(HashMap<Byte, Integer> bytesFrequencyOfFile) {
+    private HashMap<Byte, Integer> sortByValue(HashMap<Byte, Integer> bytesFrequencyOfFile)
+    {
         HashMap<Byte, Integer> sortedBytesFrequency = new LinkedHashMap<>();
-        List<Map.Entry<Byte, Integer>> list = new ArrayList<>(bytesFrequencyOfFile.entrySet());
+        List<Map.Entry<Byte, Integer>> list = new ArrayList<>
+                (bytesFrequencyOfFile.entrySet());
         list.sort(new Comparator<Map.Entry<Byte, Integer>>() {
             @Override
             public int compare(Map.Entry<Byte, Integer> o1,
