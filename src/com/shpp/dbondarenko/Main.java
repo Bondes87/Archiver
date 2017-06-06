@@ -10,7 +10,7 @@ public class Main {
     public static void main(String[] args) {
         Archiver archiver = new Archiver();
         try {
-            archiver.createArchive("Ш++5.txt");
+            archiver.createArchive("test.txt");
         } catch (IOException e) {
             e.printStackTrace();
         }

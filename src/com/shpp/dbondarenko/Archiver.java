@@ -2,7 +2,9 @@ package com.shpp.dbondarenko;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 
 /**
  * File: com.shpp.dbondarenko.Archiver.java
@@ -20,7 +22,7 @@ public class Archiver {
         for (HafmannTreeNode leaf : treeLeaves) {
             System.out.println(leaf);
         }
-        HafmannTreeNode hafmannTreeNode = buildHuffmanTree(treeLeaves);
+        HafmannTreeNode hafmannTreeRoot = buildHuffmanTree(treeLeaves);
         /*HashMap<Byte, Integer> bytesFrequencyOfFile = countBytesFrequency(bytesFromFile);
         HafmannTreeNode hafmannTreeNode = buildHuffmanTree(bytesFrequencyOfFile);
         int count = 0;
@@ -37,7 +39,20 @@ public class Archiver {
     }
 
     private HafmannTreeNode buildHuffmanTree(ArrayList<HafmannTreeNode> treeLeaves) {
-
+        System.out.println("size " + treeLeaves.size());
+        while (treeLeaves.size() > 1) {
+            ArrayList<Byte> bytes = new ArrayList<>();
+            bytes.addAll(treeLeaves.get(0).getBytes());
+            bytes.addAll(treeLeaves.get(1).getBytes());
+            int frequency = treeLeaves.get(0).getFrequency() + treeLeaves.get(1).getFrequency();
+            treeLeaves.add(new HafmannTreeNode(bytes, frequency, treeLeaves.get(0), treeLeaves.get(1)));
+            System.out.println(new HafmannTreeNode(bytes, frequency, treeLeaves.get(0), treeLeaves.get(1)));
+            System.out.println("size before: " + treeLeaves.size());
+            treeLeaves.remove(0);
+            treeLeaves.remove(0);
+            Collections.sort(treeLeaves);
+            System.out.println("size after: " + treeLeaves.size());
+        }
         return null;
     }
 
@@ -56,37 +71,6 @@ public class Archiver {
         ArrayList<HafmannTreeNode> treeLeaves = new ArrayList<>(treeLeavesMap.values());
         Collections.sort(treeLeaves);
         return treeLeaves;
-    }
-
-
-    private HashMap<Byte, Integer> countBytesFrequency(byte[] bytesFromFile) {
-        HashMap<Byte, Integer> bytesFrequencyOfFile = new HashMap<>();
-        for (byte oneByte : bytesFromFile) {
-            if (bytesFrequencyOfFile.containsKey(oneByte)) {
-                bytesFrequencyOfFile.put(oneByte, bytesFrequencyOfFile.get(oneByte) + 1);
-            } else {
-                bytesFrequencyOfFile.put(oneByte, 1);
-            }
-        }
-        return bytesFrequencyOfFile;
-    }
-
-    private HashMap<Byte, Integer> sortByValue(HashMap<Byte, Integer> bytesFrequencyOfFile)
-    {
-        HashMap<Byte, Integer> sortedBytesFrequency = new LinkedHashMap<>();
-        List<Map.Entry<Byte, Integer>> list = new ArrayList<>
-                (bytesFrequencyOfFile.entrySet());
-        list.sort(new Comparator<Map.Entry<Byte, Integer>>() {
-            @Override
-            public int compare(Map.Entry<Byte, Integer> o1,
-                               Map.Entry<Byte, Integer> o2) {
-                return (o1.getValue()).compareTo(o2.getValue());
-            }
-        });
-        for (Map.Entry<Byte, Integer> entry : list) {
-            sortedBytesFrequency.put(entry.getKey(), entry.getValue());
-        }
-        return sortedBytesFrequency;
     }
 
     private byte[] readFileToBytes(String fileName) throws IOException {
