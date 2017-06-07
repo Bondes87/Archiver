@@ -22,9 +22,9 @@ public class FileToArchive {
         HashMap<Byte, String> codingTable = createCodingTable(bytesFromFile);
         byte[] bytesToFile = archiveFile(bytesFromFile, codingTable);
         writeBytesToFile(bytesToFile, fileName);
-       /* for (Map.Entry entry : codingTable.entrySet()) {
+        for (Map.Entry entry : codingTable.entrySet()) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
-        }*/
+        }
     }
 
     private void writeBytesToFile(byte[] bytesToFile, String fileName) {
@@ -71,6 +71,9 @@ public class FileToArchive {
                 bytesList.add(firstByte);
                 //System.out.println(firstByte);
                 StringBuilder bitsOfValue = new StringBuilder(entry.getValue().toString());
+                if (bitsOfValue.length() < 16) {
+                    bitsOfValue.insert(0, "1");
+                }
                 while (bitsOfValue.length() < 16) {
                     bitsOfValue.insert(0, "0");
                 }
@@ -88,7 +91,7 @@ public class FileToArchive {
             }
 
         }
-        StringBuilder countBiteOfTable = new StringBuilder(Integer.toBinaryString(codingTable.size() * 3));
+        StringBuilder countBiteOfTable = new StringBuilder(Integer.toBinaryString((codingTable.size() - 1) * 3));
         System.out.println("countBiteOfTable: " + countBiteOfTable);
         while (countBiteOfTable.length() < 16) {
             countBiteOfTable.insert(0, "0");
