@@ -120,7 +120,7 @@ public class FileToArchive {
 
     private StringBuilder createBitsLine(byte[] bytesFromFile, HashMap<Byte, String> codingTable) {
         StringBuilder bitSequence = new StringBuilder();
-        StringBuilder endByte = new StringBuilder();
+        StringBuilder missingNumberOfBits = new StringBuilder();
         for (byte oneByte : bytesFromFile) {
             bitSequence.append(codingTable.get(oneByte));
         }
@@ -128,12 +128,12 @@ public class FileToArchive {
         System.out.println(numberOfBitsInLastByte);
         if (numberOfBitsInLastByte != 0) {
             while (numberOfBitsInLastByte != 8) {
-                endByte.append("1");
+                missingNumberOfBits.append("1");
                 numberOfBitsInLastByte++;
             }
-            bitSequence.append(endByte);
+            bitSequence.append(missingNumberOfBits);
         }
-        codingTable.put(null, endByte.toString());
+        codingTable.put(null, missingNumberOfBits.toString());
         return bitSequence;
     }
 
