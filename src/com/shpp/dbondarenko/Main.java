@@ -8,7 +8,7 @@ import java.util.Objects;
  */
 public class Main {
     public static void main(String[] args) {
-        args = new String[]{"unarchive", "2.txt-bds"};
+        args = new String[]{"unarchive", "Ш++5.txt-bds"};
         if (args.length < 2) {
             System.out.println("Specify the \"archive\" and \"unarchive\"");
         } else {

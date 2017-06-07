@@ -177,15 +177,13 @@ public class FileToArchive {
 
     private String createIdByte(Byte oneByte, HafmannTreeNode hafmannTreeRoot) {
         String idByte = "";
-        if (hafmannTreeRoot != null && hafmannTreeRoot.getBytes().contains(oneByte)) {
-            if (hafmannTreeRoot.getLeftChild() != null &&
-                    hafmannTreeRoot.getLeftChild().getBytes().contains(oneByte)) {
-                idByte = createIdByte(oneByte, hafmannTreeRoot.getLeftChild()) + "0";
-            }
-            if (hafmannTreeRoot.getRightChild() != null &&
-                    hafmannTreeRoot.getRightChild().getBytes().contains(oneByte)) {
-                idByte = createIdByte(oneByte, hafmannTreeRoot.getRightChild()) + "1";
-            }
+        if (hafmannTreeRoot.getLeftChild() != null &&
+                hafmannTreeRoot.getLeftChild().getBytes().contains(oneByte)) {
+            idByte = "0" + createIdByte(oneByte, hafmannTreeRoot.getLeftChild());
+        }
+        if (hafmannTreeRoot.getRightChild() != null &&
+                hafmannTreeRoot.getRightChild().getBytes().contains(oneByte)) {
+            idByte = "1" + createIdByte(oneByte, hafmannTreeRoot.getRightChild());
         }
         return idByte;
     }
@@ -195,10 +193,19 @@ public class FileToArchive {
         // System.out.println("size " + treeNodes.size());
         while (treeNodes.size() > 1) {
             ArrayList<Byte> bytes = new ArrayList<>();
+            HafmannTreeNode leftChild;
+            HafmannTreeNode rightChild;
+            if (treeNodes.get(0).getFrequency() >= treeNodes.get(1).getFrequency()) {
+                rightChild = treeNodes.get(0);
+                leftChild = treeNodes.get(1);
+            } else {
+                rightChild = treeNodes.get(1);
+                leftChild = treeNodes.get(0);
+            }
             bytes.addAll(treeNodes.get(0).getBytes());
             bytes.addAll(treeNodes.get(1).getBytes());
             int frequency = treeNodes.get(0).getFrequency() + treeNodes.get(1).getFrequency();
-            treeNodes.add(new HafmannTreeNode(bytes, frequency, treeNodes.get(0), treeNodes.get(1)));
+            treeNodes.add(new HafmannTreeNode(bytes, frequency, leftChild, rightChild));
             //System.out.println(new HafmannTreeNode(bytes, frequency, treeNodes.get(0), treeNodes.get(1)));
             // System.out.println("size before: " + treeNodes.size());
             treeNodes.remove(0);
