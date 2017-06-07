@@ -13,6 +13,7 @@ public class ArchiveToFile {
 
     public void unarchive(String fileName) {
         byte[] bytesFromFile = readFileToBytes(fileName);
+        System.out.println("bytesFromFile " + bytesFromFile.length);
         for (byte oneByte : bytesFromFile) {
             System.out.println(oneByte);
         }
@@ -20,12 +21,40 @@ public class ArchiveToFile {
         System.out.println(countByteOfTable);
         byte[] bytesOfTable = new byte[countByteOfTable];
         System.arraycopy(bytesFromFile, 4, bytesOfTable, 0, countByteOfTable);
-        System.out.println(bytesOfTable.length);
-        System.out.println(bytesOfTable[0]);
-        System.out.println(bytesOfTable[188]);
-        HashMap<String, Byte> codingTable = restoreCodingTable(bytesOfTable);
-        /*StringBuilder extraBits = toBinaryStringFromByte(bytesFromFile[3]);
+        //System.out.println(bytesOfTable.length);
+        //System.out.println(bytesOfTable[0]);
+        // System.out.println(bytesOfTable[188]);
+        HashMap<String, Byte> encodingTable = restoreCodingTable(bytesOfTable);
+        StringBuilder extraBits = toBinaryStringFromByte(bytesFromFile[3]);
+        byte[] bytesFromEncodedFile = new byte[bytesFromFile.length - countByteOfTable - 4];
+        System.arraycopy(bytesFromFile, 4 + countByteOfTable,
+                bytesFromEncodedFile, 0, bytesFromFile.length - countByteOfTable - 4);
+        byte[] bytesToFile = unarchiveFile(bytesFromEncodedFile, encodingTable, extraBits);
+        //System.out.println("bytesFromEncodedFile " + bytesFromEncodedFile.length);
+        // System.out.println(bytesFromEncodedFile[bytesFromEncodedFile.length-1]);
+        /*
         System.out.println(extraBits);*/
+    }
+
+    private byte[] unarchiveFile(byte[] bytesFromEncodedFile, HashMap<String, Byte> encodingTable, StringBuilder extraBits) {
+        StringBuilder bitSequence = createBitsLine(bytesFromEncodedFile, extraBits);
+        return new byte[0];
+    }
+
+    private StringBuilder createBitsLine(byte[] bytesFromEncodedFile, StringBuilder extraBits) {
+        StringBuilder bitSequence = new StringBuilder();
+        for (byte oneByte : bytesFromEncodedFile) {
+            StringBuilder bitsFromByte = toBinaryStringFromByte(oneByte);
+            System.out.println(bitsFromByte);
+            bitSequence.append(bitsFromByte);
+        }
+        System.out.println(bitSequence);
+        System.out.println(bitSequence.length());
+        bitSequence.delete(bitSequence.length() - removeLeadingZeros(extraBits).length(),
+                bitSequence.length());
+        System.out.println(bitSequence);
+        System.out.println(bitSequence.length());
+        return bitSequence;
     }
 
     private HashMap<String, Byte> restoreCodingTable(byte[] bytesOfTable) {
@@ -37,12 +66,13 @@ public class ArchiveToFile {
             String idByte = removeLeadingZeros(secondByte.append(thirdByte));
             huffmanReverseTable.put(idByte, firstByte);
         }
-        return null;
+        //System.out.println("size:" + huffmanReverseTable.size());
+        return huffmanReverseTable;
     }
 
     private String removeLeadingZeros(StringBuilder line) {
         int number = Integer.parseInt(String.valueOf(line), 2);
-        System.out.println(number);
+        //System.out.println(number);
         return Integer.toBinaryString(number);
     }
 

@@ -20,7 +20,7 @@ public class FileToArchive {
         byte[] bytesFromFile = readFileToBytes(fileName);
         System.out.println(bytesFromFile.length);
         HashMap<Byte, String> codingTable = createCodingTable(bytesFromFile);
-        byte[] bytesToFile = fileArchiving(bytesFromFile, codingTable);
+        byte[] bytesToFile = archiveFile(bytesFromFile, codingTable);
         writeBytesToFile(bytesToFile, fileName);
        /* for (Map.Entry entry : codingTable.entrySet()) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
@@ -54,7 +54,7 @@ public class FileToArchive {
     }
 
 
-    private byte[] fileArchiving(byte[] bytesFromFile, HashMap<Byte, String> codingTable) {
+    private byte[] archiveFile(byte[] bytesFromFile, HashMap<Byte, String> codingTable) {
         StringBuilder bitSequence = createBitsLine(bytesFromFile, codingTable);
         System.out.println("bitSequence: " + bitSequence);
         System.out.println("bitSequence length: " + bitSequence.length());
@@ -125,7 +125,8 @@ public class FileToArchive {
             bitSequence.append(codingTable.get(oneByte));
         }
         int numberOfBitsInLastByte = bitSequence.length() % 8;
-        System.out.println(numberOfBitsInLastByte);
+        System.out.println("bitSequence: " + bitSequence);
+        System.out.println("numberOfBitsInLastByte:" + numberOfBitsInLastByte);
         if (numberOfBitsInLastByte != 0) {
             while (numberOfBitsInLastByte != 8) {
                 missingNumberOfBits.append("1");
