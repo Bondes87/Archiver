@@ -9,31 +9,32 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * File: com.shpp.dbondarenko.Archiver.java
+ * File: com.shpp.dbondarenko.FileToArchive.java
  * Created by Dmitro Bondarenko on 02.06.2017.
  */
-public class Archiver {
+public class FileToArchive {
 
-    private static final String FILE_EXTENSION = ".bds";
+    private static final String FILE_EXTENSION = "-bds";
 
     public void createArchive(String fileName) {
         byte[] bytesFromFile = readFileToBytes(fileName);
         System.out.println(bytesFromFile.length);
         HashMap<Byte, String> codingTable = createCodingTable(bytesFromFile);
         byte[] bytesToFile = fileArchiving(bytesFromFile, codingTable);
-        for (byte b : bytesFromFile) {
-            System.out.println(b);
-        }
         writeBytesToFile(bytesToFile, fileName);
-        /*for (Map.Entry entry : codingTable.entrySet()) {
+       /* for (Map.Entry entry : codingTable.entrySet()) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
         }*/
     }
 
     private void writeBytesToFile(byte[] bytesToFile, String fileName) {
+        System.out.println("bytesToFile: " + bytesToFile.length);
+        for (byte b : bytesToFile) {
+            System.out.println(b);
+        }
         String name = createFileName(fileName);
         System.out.println(name);
-        FileOutputStream outputStream = null;
+        FileOutputStream outputStream;
         try {
             outputStream = new FileOutputStream(name);
             outputStream.write(bytesToFile);
@@ -44,9 +45,12 @@ public class Archiver {
         }
     }
 
+    /* private String createFileName(String fileName) {
+         String[] nameAndExtension = fileName.split("\\.");
+         return nameAndExtension[0] + FILE_EXTENSION;
+     }*/
     private String createFileName(String fileName) {
-        String[] nameAndExtension = fileName.split("\\.");
-        return nameAndExtension[0] + FILE_EXTENSION;
+        return fileName + FILE_EXTENSION;
     }
 
 
@@ -54,37 +58,56 @@ public class Archiver {
         StringBuilder bitSequence = createBitsLine(bytesFromFile, codingTable);
         System.out.println("bitSequence: " + bitSequence);
         System.out.println("bitSequence length: " + bitSequence.length());
-        byte[] bytes = getBytes(bitSequence, codingTable);
-        return bytes;
+        return getBytes(bitSequence, codingTable);
     }
 
     private byte[] getBytes(StringBuilder bitSequence, HashMap<Byte, String> codingTable) {
         ArrayList<Byte> bytesList = new ArrayList<>();
-        byte b;
+        byte firstByte;
+        byte secondByte;
         for (Map.Entry entry : codingTable.entrySet()) {
             if (entry.getKey() != null) {
-                b = (Byte) entry.getKey();
-                bytesList.add(b);
-                //System.out.println(b);
-                b = (byte) Integer.parseInt(entry.getValue().toString(), 2);
-                bytesList.add(b);
-                //System.out.println(b);
+                firstByte = (Byte) entry.getKey();
+                bytesList.add(firstByte);
+                //System.out.println(firstByte);
+                StringBuilder bitsOfValue = new StringBuilder(entry.getValue().toString());
+                while (bitsOfValue.length() < 16) {
+                    bitsOfValue.insert(0, "0");
+                }
+                firstByte = (byte) Integer.parseInt(bitsOfValue.substring(0, 8), 2);
+                bytesList.add(firstByte);
+                System.out.println("bitsOfValue: " + bitsOfValue);
+                secondByte = (byte) Integer.parseInt(bitsOfValue.substring(8, 16), 2);
+                bytesList.add(secondByte);
+                //System.out.println(firstByte);
             } else {
-                b = 0;
-                bytesList.add(0, b);
-                b = (byte) Integer.parseInt(codingTable.get(null), 2);
-                bytesList.add(1, b);
+                firstByte = 1;
+                bytesList.add(0, firstByte);
+                firstByte = (byte) Integer.parseInt(codingTable.get(null), 2);
+                bytesList.add(1, firstByte);
             }
+
         }
+        StringBuilder countBiteOfTable = new StringBuilder(Integer.toBinaryString(codingTable.size() * 3));
+        System.out.println("countBiteOfTable: " + countBiteOfTable);
+        while (countBiteOfTable.length() < 16) {
+            countBiteOfTable.insert(0, "0");
+        }
+        firstByte = (byte) Integer.parseInt(countBiteOfTable.substring(0, 8), 2);
+        bytesList.add(0, firstByte);
+        secondByte = (byte) Integer.parseInt(countBiteOfTable.substring(8, 16), 2);
+        bytesList.add(1, secondByte);
+        System.out.println("countBiteOfTable: " + countBiteOfTable);
+        System.out.println("List size: " + bytesList.size());
         while (bitSequence.length() > 0) {
             String subString = bitSequence.substring(0, 8);
-            b = (byte) Integer.parseInt(subString, 2);
-            bytesList.add(b);
+            firstByte = (byte) Integer.parseInt(subString, 2);
+            bytesList.add(firstByte);
             bitSequence = bitSequence.delete(0, 8);
-            // System.out.println(b);
+            //System.out.println(firstByte);
         }
-        byte[] bytes = fromListToArray(bytesList);
-        return bytes;
+        System.out.println("List size: " + bytesList.size());
+        return fromListToArray(bytesList);
     }
 
     private byte[] fromListToArray(ArrayList<Byte> bytesList) {
@@ -105,7 +128,7 @@ public class Archiver {
         System.out.println(numberOfBitsInLastByte);
         if (numberOfBitsInLastByte != 0) {
             while (numberOfBitsInLastByte != 8) {
-                endByte.append("0");
+                endByte.append("1");
                 numberOfBitsInLastByte++;
             }
             bitSequence.append(endByte);
