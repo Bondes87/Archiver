@@ -28,6 +28,17 @@ public class ArchiveToFile {
         System.out.println(extraBits);*/
     }
 
+    private HashMap<String, Byte> restoreCodingTable(byte[] bytesOfTable) {
+        HashMap<String, Byte> huffmanReverseTable = new HashMap<>();
+        for (int j = 0, i = 0; i < bytesOfTable.length; j++, i = j * 3) {
+            byte firstByte = bytesOfTable[j];
+            StringBuilder secondByte = toBinaryStringFromByte(bytesOfTable[j + 1]);
+            StringBuilder thirdByte = toBinaryStringFromByte(bytesOfTable[j + 2]);
+            System.out.println(String.valueOf(secondByte.append(thirdByte)));
+            huffmanReverseTable.put(String.valueOf(secondByte.append(thirdByte)), firstByte);
+        }
+        return null;
+    }
 
     private int getCountByteOfTable(byte[] bytesFromFile) {
         StringBuilder firstByte = toBinaryStringFromByte(bytesFromFile[0]);
