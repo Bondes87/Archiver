@@ -34,10 +34,16 @@ public class ArchiveToFile {
             byte firstByte = bytesOfTable[j];
             StringBuilder secondByte = toBinaryStringFromByte(bytesOfTable[j + 1]);
             StringBuilder thirdByte = toBinaryStringFromByte(bytesOfTable[j + 2]);
-            System.out.println(String.valueOf(secondByte.append(thirdByte)));
-            huffmanReverseTable.put(String.valueOf(secondByte.append(thirdByte)), firstByte);
+            String idByte = removeLeadingZeros(secondByte.append(thirdByte));
+            huffmanReverseTable.put(idByte, firstByte);
         }
         return null;
+    }
+
+    private String removeLeadingZeros(StringBuilder line) {
+        int number = Integer.parseInt(String.valueOf(line), 2);
+        System.out.println(number);
+        return Integer.toBinaryString(number);
     }
 
     private int getCountByteOfTable(byte[] bytesFromFile) {
