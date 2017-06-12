@@ -56,8 +56,8 @@ public class FileToArchive {
 
     private byte[] archiveFile(byte[] bytesFromFile, HashMap<Byte, String> codingTable) {
         StringBuilder bitSequence = createBitsLine(bytesFromFile, codingTable);
-        System.out.println("bitSequence: " + bitSequence);
-        System.out.println("bitSequence length: " + bitSequence.length());
+        //System.out.println("bitSequence: " + bitSequence);
+        // System.out.println("bitSequence length: " + bitSequence.length());
         return getBytes(bitSequence, codingTable);
     }
 
@@ -79,7 +79,7 @@ public class FileToArchive {
                 }
                 firstByte = (byte) Integer.parseInt(bitsOfValue.substring(0, 8), 2);
                 bytesList.add(firstByte);
-                System.out.println("bitsOfValue: " + bitsOfValue);
+                // System.out.println("bitsOfValue: " + bitsOfValue);
                 secondByte = (byte) Integer.parseInt(bitsOfValue.substring(8, 16), 2);
                 bytesList.add(secondByte);
                 //System.out.println(firstByte);
@@ -92,7 +92,7 @@ public class FileToArchive {
 
         }
         StringBuilder countBiteOfTable = new StringBuilder(Integer.toBinaryString((codingTable.size() - 1) * 3));
-        System.out.println("countBiteOfTable: " + countBiteOfTable);
+        // System.out.println("countBiteOfTable: " + countBiteOfTable);
         while (countBiteOfTable.length() < 16) {
             countBiteOfTable.insert(0, "0");
         }
@@ -100,16 +100,17 @@ public class FileToArchive {
         bytesList.add(0, firstByte);
         secondByte = (byte) Integer.parseInt(countBiteOfTable.substring(8, 16), 2);
         bytesList.add(1, secondByte);
-        System.out.println("countBiteOfTable: " + countBiteOfTable);
-        System.out.println("List size: " + bytesList.size());
-        for (int j = 0, i = 0; i < bitSequence.length() - 8; j++, i = j * 8) {
+        // System.out.println("countBiteOfTable: " + countBiteOfTable);
+        // System.out.println("List size: " + bytesList.size());
+        for (int j = 0, i = 0; i < bitSequence.length(); j++, i = j * 8) {
             String subString = bitSequence.substring(i, i + 8);
             firstByte = (byte) Integer.parseInt(subString, 2);
             bytesList.add(firstByte);
             // bitSequence = bitSequence.delete(0, 8);
             //System.out.println(firstByte);
         }
-        System.out.println("List size: " + bytesList.size());
+        //System.out.println("List size: " + bytesList.size());
+
         return fromListToArray(bytesList);
     }
 
@@ -128,8 +129,8 @@ public class FileToArchive {
             bitSequence.append(codingTable.get(oneByte));
         }
         int numberOfBitsInLastByte = bitSequence.length() % 8;
-        System.out.println("bitSequence: " + bitSequence);
-        System.out.println("numberOfBitsInLastByte:" + numberOfBitsInLastByte);
+        // System.out.println("bitSequence: " + bitSequence);
+        // System.out.println("numberOfBitsInLastByte:" + numberOfBitsInLastByte);
         if (numberOfBitsInLastByte != 0) {
             while (numberOfBitsInLastByte != 8) {
                 missingNumberOfBits.append("1");
@@ -143,24 +144,24 @@ public class FileToArchive {
 
     private HashMap<Byte, String> createCodingTable(byte[] bytesFromFile) {
         ArrayList<HafmannTreeNode> treeLeaves = createHafmannTreeLeaves(bytesFromFile);
-        for (HafmannTreeNode leaf : treeLeaves) {
+       /* for (HafmannTreeNode leaf : treeLeaves) {
             System.out.println(leaf);
-        }
+        }*/
         // System.out.println("treeLeaves: " + treeLeaves.size());
         HafmannTreeNode hafmannTreeRoot = buildHuffmanTree(treeLeaves);
         // System.out.println("treeLeaves: " + treeLeaves.size());
         //  System.out.println("hafmannTreeRoot: " + hafmannTreeRoot);
         HashMap<Byte, String> hafmannTable = createHafmannTable(treeLeaves, hafmannTreeRoot);
-        for (Map.Entry entry : hafmannTable.entrySet()) {
+       /* for (Map.Entry entry : hafmannTable.entrySet()) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
-        }
+        }*/
         return hafmannTable;
     }
 
 
     private HashMap<Byte, String> createHafmannTable(ArrayList<HafmannTreeNode> treeLeaves, HafmannTreeNode hafmannTreeRoot) {
         HashMap<Byte, String> hafmannTable = new HashMap<>();
-        System.out.println("treeLeaves: " + treeLeaves.size());
+        //System.out.println("treeLeaves: " + treeLeaves.size());
         /*byte oneByte = treeLeaves.get(0).getBytes().get(treeLeaves.get(0).getBytes().size()-1);
         System.out.println(oneByte);
         String idByte = createIdByte(oneByte, hafmannTreeRoot);
@@ -170,7 +171,7 @@ public class FileToArchive {
             String idByte = createIdByte(oneByte, hafmannTreeRoot);
             hafmannTable.put(oneByte, idByte);
         }
-        System.out.println("hafmannTable: " + hafmannTable.size());
+        // System.out.println("hafmannTable: " + hafmannTable.size());
         // System.out.println("treeLeaves: " + treeLeaves.size());
         return hafmannTable;
     }

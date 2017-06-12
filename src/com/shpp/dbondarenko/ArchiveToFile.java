@@ -72,13 +72,15 @@ public class ArchiveToFile {
             System.out.println(entry.getKey() + ": " + entry.getValue());
         }
         ArrayList<Byte> bytesList = new ArrayList<>();
-        while (bitSequence.length() > 0) {
+        int bitSequenceLength = 0;
+        while (bitSequenceLength < bitSequence.length()) {
             StringBuilder desiredBitSet = new StringBuilder();
-            for (int i = 0; i < bitSequence.length(); i++) {
+            for (int i = bitSequenceLength; i < bitSequence.length(); i++) {
                 desiredBitSet.append(bitSequence.charAt(i));
                 if (encodingTable.containsKey(String.valueOf(desiredBitSet))) {
                     bytesList.add(encodingTable.get(String.valueOf(desiredBitSet)));
-                    bitSequence.delete(0, i + 1);
+                    bitSequenceLength = i + 1;
+                    //bitSequence.delete(0, i + 1);
                     break;
                 }
             }
