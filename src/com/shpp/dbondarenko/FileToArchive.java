@@ -29,9 +29,9 @@ public class FileToArchive {
 
     private void writeBytesToFile(byte[] bytesToFile, String fileName) {
         System.out.println("bytesToFile: " + bytesToFile.length);
-        for (byte b : bytesToFile) {
+        /*for (byte b : bytesToFile) {
             System.out.println(b);
-        }
+        }*/
         String name = createFileName(fileName);
         System.out.println(name);
         FileOutputStream outputStream;
