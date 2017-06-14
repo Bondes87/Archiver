@@ -109,17 +109,46 @@ public class FileToArchive {
                         fileInputStream = new FileInputStream(fileName);
                         byte bytes[] = new byte[1024];
                         int data = fileInputStream.read(bytes);
+                        String ostatok = null;
                         while (data != -1) {
-                            bitSequence.setLength(0);
-
                             for (byte b : bytes) {
                                 bitSequence.append(codingTable.get(b));
                             }
+                            if (ostatok != null) {
+                                bitSequence.insert(0, ostatok);
+                                ostatok = null;
+                            }
+                            int endBits = bitSequence.length() % 8;
+                            if (endBits != 0) {
+                                ostatok = bitSequence.substring(bitSequence.length() - endBits,
+                                        bitSequence.length());
+                                bitSequence = new StringBuilder(bitSequence.substring(0, bitSequence.length() - 8));
+                            }
 
+                            String[] split = String.valueOf(bitSequence).split("(?<=\\G.{8})");
+                            byte[] arrayList = new byte[split.length];
+                            for (int i = 0; i < split.length - 1; i++) {
+                                String str = split[i];
+                                arrayList[i] = (byte) Integer.parseInt(str, 2);
+                            }
                             //output.write(String.valueOf(bitSequence).getBytes());
-                            output.write(getBytes(bitSequence));
+                            output.write(arrayList);
+                            bitSequence.setLength(0);
                             //output.write(bytes);
                             data = fileInputStream.read(bytes);
+                        }
+
+                        if (ostatok != null) {
+                            byte[] array = new byte[2];
+                            if (ostatok.charAt(0) == '0') {
+                                ostatok = "1" + ostatok;
+                                array[0] = (byte) Integer.parseInt(ostatok, 2);
+                                array[1] = (byte) Integer.parseInt("00000001", 2);
+                            } else {
+                                array[0] = (byte) Integer.parseInt(ostatok, 2);
+                                array[1] = (byte) Integer.parseInt("00000000", 2);
+                            }
+                            output.write(array);
                         }
                         System.out.println("archiving finish");
                         fileInputStream.close();
@@ -143,7 +172,7 @@ public class FileToArchive {
                         byte bytes[] = new byte[1024];
                         int data = input.read(bytes);
                         while (data != -1) {
-                            outputStream.write(data);
+                            outputStream.write(bytes);
                             data = input.read(bytes);
                         }
                         outputStream.close();
