@@ -1,10 +1,7 @@
 package com.shpp.dbondarenko;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * File: com.shpp.dbondarenko.FileToArchive.java
@@ -29,8 +26,10 @@ public class FileToArchive {
                         byte b[] = new byte[1024];
                         int data = fileInputStream.read(b);
                         while (data != -1) {
-                            output.write(b);
+                            byte[] a = Arrays.copyOfRange(b, 0, data);
+                            output.write(a);
                             data = fileInputStream.read(b);
+                            // System.out.println(Arrays.toString(a));
                         }
                         System.out.println("output = finish");
                         fileInputStream.close();
@@ -45,19 +44,20 @@ public class FileToArchive {
                 public void run() {
                     try {
                         HashMap<Byte, HafmannTreeNode> treeLeavesMap = new HashMap<>();
-
-
                         byte b[] = new byte[1024];
                         int data = input.read(b);
                         while (data != -1) {
-                            for (byte oneByte : b) {
+                            for (int i = 0; i < data; i++) {
+                                byte oneByte = b[i];
                                 if (treeLeavesMap.containsKey(oneByte)) {
-                                    treeLeavesMap.get(oneByte).setFrequency(treeLeavesMap.get
-                                            (oneByte).getFrequency() + 1);
+                                    treeLeavesMap.get(oneByte).setFrequency
+                                            (treeLeavesMap.get
+                                                    (oneByte).getFrequency() + 1);
                                 } else {
                                     ArrayList<Byte> bytes = new ArrayList<>();
                                     bytes.add(oneByte);
-                                    treeLeavesMap.put(oneByte, new HafmannTreeNode(bytes, 1, null, null));
+                                    treeLeavesMap.put(oneByte, new HafmannTreeNode(bytes,
+                                            1, null, null));
                                 }
                             }
 
@@ -67,7 +67,8 @@ public class FileToArchive {
                         System.out.println("input = finish");
 
 
-                        ArrayList<HafmannTreeNode> treeLeaves = new ArrayList<>(treeLeavesMap.values());
+                        ArrayList<HafmannTreeNode> treeLeaves = new ArrayList<>
+                                (treeLeavesMap.values());
                         Collections.sort(treeLeaves);
        /* for (HafmannTreeNode leaf : treeLeaves) {
             System.out.println(leaf);
@@ -93,13 +94,43 @@ public class FileToArchive {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
-
+        for (Map.Entry entry : codingTable.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
         System.out.println("main finish");
         try {
             final PipedOutputStream output = new PipedOutputStream();
             final PipedInputStream input = new PipedInputStream(output);
 
             Thread thread1 = new Thread(new Runnable() {
+
+
+                @Override
+                public void run() {
+                    try {
+                        File file = new File(createFileName(fileName));
+                        file.createNewFile();
+                        FileOutputStream outputStream;
+                        outputStream = new FileOutputStream(file, true);
+
+                        byte bytes[] = new byte[1024];
+                        int data = input.read(bytes);
+                        while (data != -1) {
+                            byte[] a = Arrays.copyOfRange(bytes, 0, data);
+                            outputStream.write(a);
+                            data = input.read(bytes);
+                        }
+                        outputStream.close();
+                        input.close();
+                        System.out.println("file write finish");
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            });
+            Thread thread2 = new Thread(new Runnable() {
                 private FileInputStream fileInputStream;
 
                 @Override
@@ -109,28 +140,43 @@ public class FileToArchive {
                         fileInputStream = new FileInputStream(fileName);
                         byte bytes[] = new byte[1024];
                         int data = fileInputStream.read(bytes);
+                        // System.out.println(data);
                         String ostatok = null;
                         while (data != -1) {
-                            for (byte b : bytes) {
+                            // System.out.println(Arrays.toString(bytes));
+                            for (int i = 0; i < data; i++) {
+                                byte b = bytes[i];
                                 bitSequence.append(codingTable.get(b));
                             }
+                            //System.out.println(bitSequence);
+                            // System.out.println(bitSequence.length());
                             if (ostatok != null) {
                                 bitSequence.insert(0, ostatok);
                                 ostatok = null;
                             }
                             int endBits = bitSequence.length() % 8;
                             if (endBits != 0) {
-                                ostatok = bitSequence.substring(bitSequence.length() - endBits,
+                                ostatok = bitSequence.substring(bitSequence.length() -
+                                                endBits,
                                         bitSequence.length());
-                                bitSequence = new StringBuilder(bitSequence.substring(0, bitSequence.length() - 8));
+                                bitSequence = new StringBuilder(bitSequence.substring(0,
+                                        bitSequence.length() - endBits));
                             }
-
+                            /*byte[] arrayMy = new byte[bitSequence.length() / 8];
+                            System.out.println(arrayMy.length);
+                            for (int j = 0, i = 0; i < bitSequence.length(); j++, i = j *
+                                    8) {
+                                String subString = bitSequence.substring(i, i + 8);
+                                arrayMy[j] = (byte) Integer.parseInt(subString, 2);
+                            }*/
                             String[] split = String.valueOf(bitSequence).split("(?<=\\G.{8})");
+                            // System.out.println(Arrays.toString(split));
                             byte[] arrayList = new byte[split.length];
-                            for (int i = 0; i < split.length - 1; i++) {
+                            for (int i = 0; i < split.length; i++) {
                                 String str = split[i];
                                 arrayList[i] = (byte) Integer.parseInt(str, 2);
                             }
+                            // System.out.println(Arrays.toString(arrayList));
                             //output.write(String.valueOf(bitSequence).getBytes());
                             output.write(arrayList);
                             bitSequence.setLength(0);
@@ -156,33 +202,6 @@ public class FileToArchive {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                }
-            });
-
-            Thread thread2 = new Thread(new Runnable() {
-
-                @Override
-                public void run() {
-                    try {
-                        File file = new File(createFileName(fileName));
-                        file.createNewFile();
-                        FileOutputStream outputStream;
-                        outputStream = new FileOutputStream(file, true);
-
-                        byte bytes[] = new byte[1024];
-                        int data = input.read(bytes);
-                        while (data != -1) {
-                            outputStream.write(bytes);
-                            data = input.read(bytes);
-                        }
-                        outputStream.close();
-                        input.close();
-                        System.out.println("file write finish");
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
                 }
             });
             thread1.start();
