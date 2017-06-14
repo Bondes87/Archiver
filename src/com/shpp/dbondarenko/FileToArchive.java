@@ -98,13 +98,11 @@ public class FileToArchive {
             System.out.println(entry.getKey() + ": " + entry.getValue());
         }
         System.out.println("main finish");
+
         try {
             final PipedOutputStream output = new PipedOutputStream();
             final PipedInputStream input = new PipedInputStream(output);
-
             Thread thread1 = new Thread(new Runnable() {
-
-
                 @Override
                 public void run() {
                     try {
