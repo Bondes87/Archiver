@@ -13,11 +13,12 @@ public class Main {
         } else {
             if (Objects.equals(args[0], "archive")) {
                 FileToArchive archive = new FileToArchive();
-                archive.createArchive(args[1]);
-            }
-            if (Objects.equals(args[0], "unarchive")) {
+                archive.createArchiveFromFile(args[1]);
+            } else if (Objects.equals(args[0], "unarchive")) {
                 ArchiveToFile archive = new ArchiveToFile();
-                archive.unarchive(args[1]);
+                archive.restoreFileFromArchive(args[1]);
+            } else {
+                System.out.println("Please, indicate what should be done: \"archive\" or \"unarchive\"");
             }
         }
     }

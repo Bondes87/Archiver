@@ -3,16 +3,16 @@ package com.shpp.dbondarenko;
 import java.util.ArrayList;
 
 /**
- * File: HafmannTreeNode.java
+ * File: HuffmanTreeNode.java
  * Created by Dmitro Bondarenko on 05.06.2017.
  */
-public class HafmannTreeNode implements Comparable<HafmannTreeNode> {
+public class HuffmanTreeNode implements Comparable<HuffmanTreeNode> {
     private ArrayList<Byte> bytes;
     private int frequency;
-    private HafmannTreeNode LeftChild;
-    private HafmannTreeNode RightChild;
+    private HuffmanTreeNode LeftChild;
+    private HuffmanTreeNode RightChild;
 
-    public HafmannTreeNode(ArrayList<Byte> bytes, int frequency, HafmannTreeNode leftChild, HafmannTreeNode rightChild) {
+    public HuffmanTreeNode(ArrayList<Byte> bytes, int frequency, HuffmanTreeNode leftChild, HuffmanTreeNode rightChild) {
         this.bytes = bytes;
         this.frequency = frequency;
         LeftChild = leftChild;
@@ -21,7 +21,7 @@ public class HafmannTreeNode implements Comparable<HafmannTreeNode> {
 
     @Override
     public String toString() {
-        return "HafmannTreeNode{" +
+        return "HuffmanTreeNode{" +
                 "bytes=" + bytes +
                 ", frequency=" + frequency +
                 ", LeftChild=" + LeftChild +
@@ -30,7 +30,7 @@ public class HafmannTreeNode implements Comparable<HafmannTreeNode> {
     }
 
     @Override
-    public int compareTo(HafmannTreeNode o) {
+    public int compareTo(HuffmanTreeNode o) {
         if (o.getFrequency() > frequency) {
             return -1;
         } else if (o.getFrequency() < frequency) {
@@ -56,19 +56,19 @@ public class HafmannTreeNode implements Comparable<HafmannTreeNode> {
         this.frequency = frequency;
     }
 
-    public HafmannTreeNode getLeftChild() {
+    public HuffmanTreeNode getLeftChild() {
         return LeftChild;
     }
 
-    public void setLeftChild(HafmannTreeNode leftChild) {
+    public void setLeftChild(HuffmanTreeNode leftChild) {
         LeftChild = leftChild;
     }
 
-    public HafmannTreeNode getRightChild() {
+    public HuffmanTreeNode getRightChild() {
         return RightChild;
     }
 
-    public void setRightChild(HafmannTreeNode rightChild) {
+    public void setRightChild(HuffmanTreeNode rightChild) {
         RightChild = rightChild;
     }
 }

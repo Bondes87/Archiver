@@ -13,36 +13,12 @@ public class ArchiveToFile {
     private static final String FILE_EXTENSION = "-bds";
     private HashMap<String, Byte> codingTable;
 
-    public void unarchive(String fileName) {
+    public void restoreFileFromArchive(String fileName) {
         codingTable = new HashMap<>();
         try {
             final PipedOutputStream output = new PipedOutputStream();
             final PipedInputStream input = new PipedInputStream(output);
-            Thread thread1 = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        File file = new File(createFileName(fileName));
-                        file.createNewFile();
-                        FileOutputStream outputStream;
-                        outputStream = new FileOutputStream(file, true);
-                        byte bytes[] = new byte[1024];
-                        int data = input.read(bytes);
-                        while (data != -1) {
-                            byte[] a = Arrays.copyOfRange(bytes, 0, data);
-                            outputStream.write(a);
-                            data = input.read(bytes);
-                        }
-                        outputStream.close();
-                        input.close();
-                        System.out.println("file write finish");
-                    } catch (IOException e) {
-                        System.out.println("Sorry. Such file was not found.");
-                        e.printStackTrace();
-                    }
-                }
-            });
-            Thread thread2 = new Thread(new Runnable() {
+            Thread ReaderThread = new Thread(new Runnable() {
                 private FileInputStream fileInputStream;
 
                 @Override
@@ -142,8 +118,36 @@ public class ArchiveToFile {
                     }
                 }
             });
-            thread1.start();
-            thread2.start();
+            Thread WriterThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        File file = new File(createFileName(fileName));
+                        file.createNewFile();
+                        if (file.exists()) {
+                            file.delete();
+                        }
+                        FileOutputStream outputStream;
+                        outputStream = new FileOutputStream(file, true);
+                        byte bytes[] = new byte[1024];
+                        int data = input.read(bytes);
+                        while (data != -1) {
+                            byte[] a = Arrays.copyOfRange(bytes, 0, data);
+                            outputStream.write(a);
+                            data = input.read(bytes);
+                        }
+                        outputStream.close();
+                        input.close();
+                        System.out.println("file write finish");
+                    } catch (IOException e) {
+                        System.out.println("Sorry. Such file was not found.");
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+            ReaderThread.start();
+            WriterThread.start();
         } catch (IOException e) {
             System.out.println("Sorry. Create an archive failed.");
             e.printStackTrace();
