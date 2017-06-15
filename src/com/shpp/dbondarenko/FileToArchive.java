@@ -10,6 +10,8 @@ import java.util.*;
 public class FileToArchive {
     private static final String FILE_EXTENSION = "-bds";
     private static final int BUFFER_SIZE_FOR_READING_AND_WRITING = 1024;
+    private static final int COUNT_OF_BITS_IN_BYTE = 8;
+    private static final int BINARY_SYSTEM = 2;
     private HashMap<Byte, String> codingTable;
 
     public void createArchiveFromFile(String fileName) {
@@ -182,7 +184,7 @@ public class FileToArchive {
                     byte b = buffer[i];
                     bitSequence.append(codingTable.get(b));
                 }
-                int countOfBitsInLastByte = bitSequence.length() % 8;
+                int countOfBitsInLastByte = bitSequence.length() % COUNT_OF_BITS_IN_BYTE;
                 if (countOfBitsInLastByte != 0) {
                     bitsResidue = bitSequence.substring(bitSequence.length() -
                             countOfBitsInLastByte, bitSequence.length());
@@ -202,12 +204,12 @@ public class FileToArchive {
 
     private void writeBitSequence(PipedOutputStream pipedOutputStream, StringBuilder
             bitSequence) throws IOException {
-        if (bitSequence.length() >= 8) {
+        if (bitSequence.length() >= COUNT_OF_BITS_IN_BYTE) {
             String[] split = String.valueOf(bitSequence).split("(?<=\\G.{8})");
             byte[] arrayList = new byte[split.length];
             for (int i = 0; i < split.length; i++) {
                 String str = split[i];
-                arrayList[i] = (byte) Integer.parseInt(str, 2);
+                arrayList[i] = (byte) Integer.parseInt(str, BINARY_SYSTEM);
             }
             pipedOutputStream.write(arrayList);
             bitSequence.setLength(0);
@@ -220,11 +222,11 @@ public class FileToArchive {
             byte[] array = new byte[2];
             if (bitsResidue.charAt(0) == '0') {
                 bitsResidue = "1" + bitsResidue;
-                array[0] = (byte) Integer.parseInt(bitsResidue, 2);
-                array[1] = (byte) Integer.parseInt("00000001", 2);
+                array[0] = (byte) Integer.parseInt(bitsResidue, BINARY_SYSTEM);
+                array[1] = (byte) Integer.parseInt("00000001", BINARY_SYSTEM);
             } else {
-                array[0] = (byte) Integer.parseInt(bitsResidue, 2);
-                array[1] = (byte) Integer.parseInt("00000000", 2);
+                array[0] = (byte) Integer.parseInt(bitsResidue, BINARY_SYSTEM);
+                array[1] = (byte) Integer.parseInt("00000000", BINARY_SYSTEM);
             }
             pipedOutputStream.write(array);
         }
@@ -237,26 +239,26 @@ public class FileToArchive {
         int index = 0;
         StringBuilder countBiteOfTable = new StringBuilder(Integer.toBinaryString
                 (codingTable.size() * 3));
-        while (countBiteOfTable.length() < 16) {
+        while (countBiteOfTable.length() < COUNT_OF_BITS_IN_BYTE * 2) {
             countBiteOfTable.insert(0, "0");
         }
-        firstByte = (byte) Integer.parseInt(countBiteOfTable.substring(0, 8), 2);
+        firstByte = (byte) Integer.parseInt(countBiteOfTable.substring(0, COUNT_OF_BITS_IN_BYTE), BINARY_SYSTEM);
         bytesFromCodingTable[index++] = firstByte;
-        secondByte = (byte) Integer.parseInt(countBiteOfTable.substring(8, 16), 2);
+        secondByte = (byte) Integer.parseInt(countBiteOfTable.substring(COUNT_OF_BITS_IN_BYTE, COUNT_OF_BITS_IN_BYTE * 2), BINARY_SYSTEM);
         bytesFromCodingTable[index++] = secondByte;
         for (Map.Entry entry : codingTable.entrySet()) {
             firstByte = (Byte) entry.getKey();
             bytesFromCodingTable[index++] = firstByte;
             StringBuilder bitsOfValue = new StringBuilder(entry.getValue().toString());
-            if (bitsOfValue.length() < 16) {
+            if (bitsOfValue.length() < COUNT_OF_BITS_IN_BYTE * 2) {
                 bitsOfValue.insert(0, "1");
             }
-            while (bitsOfValue.length() < 16) {
+            while (bitsOfValue.length() < COUNT_OF_BITS_IN_BYTE * 2) {
                 bitsOfValue.insert(0, "0");
             }
-            firstByte = (byte) Integer.parseInt(bitsOfValue.substring(0, 8), 2);
+            firstByte = (byte) Integer.parseInt(bitsOfValue.substring(0, COUNT_OF_BITS_IN_BYTE), BINARY_SYSTEM);
             bytesFromCodingTable[index++] = firstByte;
-            secondByte = (byte) Integer.parseInt(bitsOfValue.substring(8, 16), 2);
+            secondByte = (byte) Integer.parseInt(bitsOfValue.substring(COUNT_OF_BITS_IN_BYTE, COUNT_OF_BITS_IN_BYTE * 2), BINARY_SYSTEM);
             bytesFromCodingTable[index++] = secondByte;
         }
         return bytesFromCodingTable;
