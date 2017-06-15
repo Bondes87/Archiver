@@ -120,7 +120,7 @@ public class ArchiveToFile {
                         FileOutputStream outputStream;
                         outputStream = new FileOutputStream(file, true);
 
-                        byte bytes[] = new byte[2048];
+                        byte bytes[] = new byte[1024];
                         int data = input.read(bytes);
                         while (data != -1) {
                             byte[] a = Arrays.copyOfRange(bytes, 0, data);
@@ -180,7 +180,6 @@ public class ArchiveToFile {
                                         bitSequenceLength += desiredBitSet.length();
                                     }
                                 }
-                                System.out.println(arrayList1.size());
                                 output.write(fromListToArray(arrayList1));
                                 bitSequence.setLength(0);
                                 //System.out.println(bitSequence);
