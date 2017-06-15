@@ -120,7 +120,7 @@ public class ArchiveToFile {
                         FileOutputStream outputStream;
                         outputStream = new FileOutputStream(file, true);
 
-                        byte bytes[] = new byte[1024];
+                        byte bytes[] = new byte[2048];
                         int data = input.read(bytes);
                         while (data != -1) {
                             byte[] a = Arrays.copyOfRange(bytes, 0, data);
@@ -150,16 +150,15 @@ public class ArchiveToFile {
                         // System.out.println(data);
                         String ostatok = null;
                         while (data != -2) {
-                            System.out.println(Arrays.toString(bytes));
                             byte[] copyBytes = Arrays.copyOf(bytes, data);
                             if ((data = fileInputStream.read(bytes)) != -1) {
                                 if (ostatok != null) {
-                                    bitSequence.insert(0, ostatok);
+                                    bitSequence.append(ostatok);
                                     ostatok = null;
                                 }
                                 ArrayList<Byte> arrayList1 = new ArrayList<>();
                                 // System.out.println(Arrays.toString(bytes));
-                                for (int i = 0; i < data; i++) {
+                                for (int i = 0; i < copyBytes.length; i++) {
                                     byte b = copyBytes[i];
                                     bitSequence.append(toBinaryStringFromByte(b));
                                 }
@@ -171,15 +170,17 @@ public class ArchiveToFile {
                                         if (codingTable.containsKey(String.valueOf(desiredBitSet))) {
                                             arrayList1.add(codingTable.get(String.valueOf(desiredBitSet)));
                                             bitSequenceLength = i + 1;
-                                            desiredBitSet = new StringBuilder();
+                                            desiredBitSet.setLength(0);
                                             //bitSequence.delete(0, i + 1);
                                             break;
                                         }
                                     }
                                     if (desiredBitSet.length() > 0) {
                                         ostatok = String.valueOf(desiredBitSet);
+                                        bitSequenceLength += desiredBitSet.length();
                                     }
                                 }
+                                System.out.println(arrayList1.size());
                                 output.write(fromListToArray(arrayList1));
                                 bitSequence.setLength(0);
                                 //System.out.println(bitSequence);
