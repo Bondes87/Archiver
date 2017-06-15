@@ -22,7 +22,8 @@ public class FileToArchive {
         }
     }
 
-    private void createCodingTable(String fileName) throws IOException, InterruptedException {
+    private void createCodingTable(String fileName) throws IOException,
+            InterruptedException {
         final PipedOutputStream output = new PipedOutputStream();
         final PipedInputStream input = new PipedInputStream(output);
         Thread readerThread = new Thread(new Runnable() {
@@ -35,7 +36,8 @@ public class FileToArchive {
             @Override
             public void run() {
                 try {
-                    ArrayList<HuffmanTreeNode> treeLeaves = createLeavesOfHuffmanTree(input);
+                    ArrayList<HuffmanTreeNode> treeLeaves = createLeavesOfHuffmanTree
+                            (input);
                     HuffmanTreeNode huffmanTreeRoot = buildHuffmanTree(treeLeaves);
                     codingTable = createHuffmanTable(treeLeaves, huffmanTreeRoot);
                 } catch (IOException e) {
@@ -87,7 +89,8 @@ public class FileToArchive {
         }
     }
 
-    private ArrayList<HuffmanTreeNode> createLeavesOfHuffmanTree(PipedInputStream input) throws IOException {
+    private ArrayList<HuffmanTreeNode> createLeavesOfHuffmanTree(PipedInputStream input)
+            throws IOException {
         HashMap<Byte, HuffmanTreeNode> treeLeavesMap = new HashMap<>();
         byte[] buffer = new byte[BUFFER_SIZE_FOR_READING_AND_WRITING];
         int bufferSize = input.read(buffer);
@@ -95,7 +98,8 @@ public class FileToArchive {
             for (int i = 0; i < bufferSize; i++) {
                 byte oneByte = buffer[i];
                 if (treeLeavesMap.containsKey(oneByte)) {
-                    treeLeavesMap.get(oneByte).setFrequency(treeLeavesMap.get(oneByte).getFrequency() + 1);
+                    treeLeavesMap.get(oneByte).setFrequency(treeLeavesMap.get
+                            (oneByte).getFrequency() + 1);
                 } else {
                     ArrayList<Byte> bytes = new ArrayList<>();
                     bytes.add(oneByte);
@@ -125,7 +129,8 @@ public class FileToArchive {
             }
             bytes.addAll(treeNodes.get(0).getBytes());
             bytes.addAll(treeNodes.get(1).getBytes());
-            int frequency = treeNodes.get(0).getFrequency() + treeNodes.get(1).getFrequency();
+            int frequency = treeNodes.get(0).getFrequency() + treeNodes.get
+                    (1).getFrequency();
             treeNodes.add(new HuffmanTreeNode(bytes, frequency, leftChild, rightChild));
             treeNodes.remove(0);
             treeNodes.remove(0);
@@ -134,7 +139,8 @@ public class FileToArchive {
         return treeNodes.get(0);
     }
 
-    private HashMap<Byte, String> createHuffmanTable(ArrayList<HuffmanTreeNode> treeLeaves, HuffmanTreeNode huffmanTreeRoot) {
+    private HashMap<Byte, String> createHuffmanTable(ArrayList<HuffmanTreeNode> treeLeaves,
+                                                     HuffmanTreeNode huffmanTreeRoot) {
         HashMap<Byte, String> huffmanTable = new HashMap<>();
         for (HuffmanTreeNode leaf : treeLeaves) {
             byte oneByte = leaf.getBytes().get(0);
@@ -157,11 +163,11 @@ public class FileToArchive {
         return idByte;
     }
 
-    private void createBytesForWriting(PipedOutputStream pipedOutputStream, String fileName) {
+    private void createBytesForWriting(PipedOutputStream pipedOutputStream, String
+            fileName) {
         try {
             FileInputStream fileInputStream;
-            ArrayList<Byte> bytesList = getBytesForCodingTable();
-            pipedOutputStream.write(fromListToArray(bytesList));
+            pipedOutputStream.write(getBytesForCodingTable());
             StringBuilder bitSequence = new StringBuilder();
             fileInputStream = new FileInputStream(fileName);
             byte[] buffer = new byte[BUFFER_SIZE_FOR_READING_AND_WRITING];
@@ -178,8 +184,10 @@ public class FileToArchive {
                 }
                 int countOfBitsInLastByte = bitSequence.length() % 8;
                 if (countOfBitsInLastByte != 0) {
-                    bitsResidue = bitSequence.substring(bitSequence.length() - countOfBitsInLastByte, bitSequence.length());
-                    bitSequence = new StringBuilder(bitSequence.substring(0, bitSequence.length() - countOfBitsInLastByte));
+                    bitsResidue = bitSequence.substring(bitSequence.length() -
+                            countOfBitsInLastByte, bitSequence.length());
+                    bitSequence = new StringBuilder(bitSequence.substring(0,
+                            bitSequence.length() - countOfBitsInLastByte));
                 }
                 writeBitSequence(pipedOutputStream, bitSequence);
                 bufferSize = fileInputStream.read(buffer);
@@ -192,7 +200,8 @@ public class FileToArchive {
         }
     }
 
-    private void writeBitSequence(PipedOutputStream pipedOutputStream, StringBuilder bitSequence) throws IOException {
+    private void writeBitSequence(PipedOutputStream pipedOutputStream, StringBuilder
+            bitSequence) throws IOException {
         if (bitSequence.length() >= 8) {
             String[] split = String.valueOf(bitSequence).split("(?<=\\G.{8})");
             byte[] arrayList = new byte[split.length];
@@ -205,7 +214,8 @@ public class FileToArchive {
         }
     }
 
-    private void writeBitsResidue(PipedOutputStream pipedOutputStream, String bitsResidue) throws IOException {
+    private void writeBitsResidue(PipedOutputStream pipedOutputStream, String bitsResidue)
+            throws IOException {
         if (bitsResidue != null) {
             byte[] array = new byte[2];
             if (bitsResidue.charAt(0) == '0') {
@@ -220,13 +230,23 @@ public class FileToArchive {
         }
     }
 
-    private ArrayList<Byte> getBytesForCodingTable() {
-        ArrayList<Byte> bytesList = new ArrayList<>();
+    private byte[] getBytesForCodingTable() {
+        byte[] bytesFromCodingTable = new byte[codingTable.size() * 3 + 2];
         byte firstByte;
         byte secondByte;
+        int index = 0;
+        StringBuilder countBiteOfTable = new StringBuilder(Integer.toBinaryString
+                (codingTable.size() * 3));
+        while (countBiteOfTable.length() < 16) {
+            countBiteOfTable.insert(0, "0");
+        }
+        firstByte = (byte) Integer.parseInt(countBiteOfTable.substring(0, 8), 2);
+        bytesFromCodingTable[index++] = firstByte;
+        secondByte = (byte) Integer.parseInt(countBiteOfTable.substring(8, 16), 2);
+        bytesFromCodingTable[index++] = secondByte;
         for (Map.Entry entry : codingTable.entrySet()) {
             firstByte = (Byte) entry.getKey();
-            bytesList.add(firstByte);
+            bytesFromCodingTable[index++] = firstByte;
             StringBuilder bitsOfValue = new StringBuilder(entry.getValue().toString());
             if (bitsOfValue.length() < 16) {
                 bitsOfValue.insert(0, "1");
@@ -235,27 +255,11 @@ public class FileToArchive {
                 bitsOfValue.insert(0, "0");
             }
             firstByte = (byte) Integer.parseInt(bitsOfValue.substring(0, 8), 2);
-            bytesList.add(firstByte);
+            bytesFromCodingTable[index++] = firstByte;
             secondByte = (byte) Integer.parseInt(bitsOfValue.substring(8, 16), 2);
-            bytesList.add(secondByte);
+            bytesFromCodingTable[index++] = secondByte;
         }
-        StringBuilder countBiteOfTable = new StringBuilder(Integer.toBinaryString(codingTable.size() * 3));
-        while (countBiteOfTable.length() < 16) {
-            countBiteOfTable.insert(0, "0");
-        }
-        firstByte = (byte) Integer.parseInt(countBiteOfTable.substring(0, 8), 2);
-        bytesList.add(0, firstByte);
-        secondByte = (byte) Integer.parseInt(countBiteOfTable.substring(8, 16), 2);
-        bytesList.add(1, secondByte);
-        return bytesList;
-    }
-
-    private byte[] fromListToArray(ArrayList<Byte> bytesList) {
-        byte[] bytes = new byte[bytesList.size()];
-        for (int i = 0; i < bytes.length; i++) {
-            bytes[i] = bytesList.get(i);
-        }
-        return bytes;
+        return bytesFromCodingTable;
     }
 
     private void writeFile(String fileName, PipedInputStream pipedInputStream) {
