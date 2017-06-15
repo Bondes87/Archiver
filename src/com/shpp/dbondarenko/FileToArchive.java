@@ -29,12 +29,12 @@ public class FileToArchive {
                             byte[] a = Arrays.copyOfRange(b, 0, data);
                             output.write(a);
                             data = fileInputStream.read(b);
-                            // System.out.println(Arrays.toString(a));
                         }
                         System.out.println("output = finish");
                         fileInputStream.close();
                         output.close();
                     } catch (IOException e) {
+                        System.out.println("Sorry. Such file was not found.");
                         e.printStackTrace();
                     }
                 }
@@ -65,18 +65,10 @@ public class FileToArchive {
                         }
                         input.close();
                         System.out.println("input = finish");
-
-
                         ArrayList<HafmannTreeNode> treeLeaves = new ArrayList<>
                                 (treeLeavesMap.values());
                         Collections.sort(treeLeaves);
-       /* for (HafmannTreeNode leaf : treeLeaves) {
-            System.out.println(leaf);
-        }*/
-                        // System.out.println("treeLeaves: " + treeLeaves.size());
                         HafmannTreeNode hafmannTreeRoot = buildHuffmanTree(treeLeaves);
-                        // System.out.println("treeLeaves: " + treeLeaves.size());
-                        //  System.out.println("hafmannTreeRoot: " + hafmannTreeRoot);
                         codingTable = createHafmannTable(treeLeaves,
                                 hafmannTreeRoot);
 
@@ -129,6 +121,57 @@ public class FileToArchive {
                 }
             });
             Thread thread2 = new Thread(new Runnable() {
+                private ByteArrayInputStream byteArrayInputStream;
+
+                @Override
+                public void run() {
+                    try {
+                        ArrayList<Byte> bytesList = getBytesForCodingTable();
+                        output.write(fromListToArray(bytesList));
+                        System.out.println("archiving finish");
+                        output.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            thread1.start();
+            thread2.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("codeTable write");
+
+        try {
+            final PipedOutputStream output = new PipedOutputStream();
+            final PipedInputStream input = new PipedInputStream(output);
+            Thread thread1 = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        File file = new File(createFileName(fileName));
+                        file.createNewFile();
+                        FileOutputStream outputStream;
+                        outputStream = new FileOutputStream(file, true);
+
+                        byte bytes[] = new byte[1024];
+                        int data = input.read(bytes);
+                        while (data != -1) {
+                            byte[] a = Arrays.copyOfRange(bytes, 0, data);
+                            outputStream.write(a);
+                            data = input.read(bytes);
+                        }
+                        outputStream.close();
+                        input.close();
+                        System.out.println("file write finish");
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            });
+            Thread thread2 = new Thread(new Runnable() {
                 private FileInputStream fileInputStream;
 
                 @Override
@@ -138,16 +181,12 @@ public class FileToArchive {
                         fileInputStream = new FileInputStream(fileName);
                         byte bytes[] = new byte[1024];
                         int data = fileInputStream.read(bytes);
-                        // System.out.println(data);
                         String ostatok = null;
                         while (data != -1) {
-                            // System.out.println(Arrays.toString(bytes));
                             for (int i = 0; i < data; i++) {
                                 byte b = bytes[i];
                                 bitSequence.append(codingTable.get(b));
                             }
-                            //System.out.println(bitSequence);
-                            // System.out.println(bitSequence.length());
                             if (ostatok != null) {
                                 bitSequence.insert(0, ostatok);
                                 ostatok = null;
@@ -160,28 +199,18 @@ public class FileToArchive {
                                 bitSequence = new StringBuilder(bitSequence.substring(0,
                                         bitSequence.length() - endBits));
                             }
-                            /*byte[] arrayMy = new byte[bitSequence.length() / 8];
-                            System.out.println(arrayMy.length);
-                            for (int j = 0, i = 0; i < bitSequence.length(); j++, i = j *
-                                    8) {
-                                String subString = bitSequence.substring(i, i + 8);
-                                arrayMy[j] = (byte) Integer.parseInt(subString, 2);
-                            }*/
-                            String[] split = String.valueOf(bitSequence).split("(?<=\\G.{8})");
-                            // System.out.println(Arrays.toString(split));
-                            byte[] arrayList = new byte[split.length];
-                            for (int i = 0; i < split.length; i++) {
-                                String str = split[i];
-                                arrayList[i] = (byte) Integer.parseInt(str, 2);
+                            if (bitSequence.length() >= 8) {
+                                String[] split = String.valueOf(bitSequence).split("(?<=\\G.{8})");
+                                byte[] arrayList = new byte[split.length];
+                                for (int i = 0; i < split.length; i++) {
+                                    String str = split[i];
+                                    arrayList[i] = (byte) Integer.parseInt(str, 2);
+                                }
+                                output.write(arrayList);
+                                bitSequence.setLength(0);
                             }
-                            // System.out.println(Arrays.toString(arrayList));
-                            //output.write(String.valueOf(bitSequence).getBytes());
-                            output.write(arrayList);
-                            bitSequence.setLength(0);
-                            //output.write(bytes);
                             data = fileInputStream.read(bytes);
                         }
-
                         if (ostatok != null) {
                             byte[] array = new byte[2];
                             if (ostatok.charAt(0) == '0') {
@@ -207,18 +236,40 @@ public class FileToArchive {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
-
-        //byte[] bytesToFile = archiveFile(bytesFromFile, codingTable);
-        //writeBytesToFile(bytesToFile, fileName);
-       /* for (Map.Entry entry : codingTable.entrySet()) {
-            System.out.println(entry.getKey() + ": " + entry.getValue());
-        }*/
-        // byte[] bytesToFile = archiveFile(bytesFromFile, codingTable);
-        //writeBytesToFile(bytesToFile, fileName);
-       /* for (Map.Entry entry : codingTable.entrySet()) {
-            System.out.println(entry.getKey() + ": " + entry.getValue());
-        }*/
+    private ArrayList<Byte> getBytesForCodingTable() {
+        ArrayList<Byte> bytesList = new ArrayList<>();
+        byte firstByte;
+        byte secondByte;
+        for (Map.Entry entry : codingTable.entrySet()) {
+            firstByte = (Byte) entry.getKey();
+            bytesList.add(firstByte);
+            //System.out.println(firstByte);
+            StringBuilder bitsOfValue = new StringBuilder(entry.getValue().toString());
+            if (bitsOfValue.length() < 16) {
+                bitsOfValue.insert(0, "1");
+            }
+            while (bitsOfValue.length() < 16) {
+                bitsOfValue.insert(0, "0");
+            }
+            firstByte = (byte) Integer.parseInt(bitsOfValue.substring(0, 8), 2);
+            bytesList.add(firstByte);
+            // System.out.println("bitsOfValue: " + bitsOfValue);
+            secondByte = (byte) Integer.parseInt(bitsOfValue.substring(8, 16), 2);
+            bytesList.add(secondByte);
+            //System.out.println(firstByte);
+        }
+        System.out.println(bytesList.size());
+        StringBuilder countBiteOfTable = new StringBuilder(Integer.toBinaryString(codingTable.size() * 3));
+        while (countBiteOfTable.length() < 16) {
+            countBiteOfTable.insert(0, "0");
+        }
+        firstByte = (byte) Integer.parseInt(countBiteOfTable.substring(0, 8), 2);
+        bytesList.add(0, firstByte);
+        secondByte = (byte) Integer.parseInt(countBiteOfTable.substring(8, 16), 2);
+        bytesList.add(1, secondByte);
+        return bytesList;
     }
 
     private void writeBytesToFile(byte[] bytesToFile, String fileName) {
@@ -239,10 +290,6 @@ public class FileToArchive {
         }
     }
 
-    /* private String createFileName(String fileName) {
-         String[] nameAndExtension = fileName.split("\\.");
-         return nameAndExtension[0] + FILE_EXTENSION;
-     }*/
     private String createFileName(String fileName) {
         return fileName + FILE_EXTENSION;
     }
