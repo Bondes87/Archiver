@@ -115,6 +115,7 @@ public class FileToArchive {
                         int data = input.read(bytes);
                         while (data != -1) {
                             byte[] a = Arrays.copyOfRange(bytes, 0, data);
+                            System.out.println(Arrays.toString(a));
                             outputStream.write(a);
                             data = input.read(bytes);
                         }

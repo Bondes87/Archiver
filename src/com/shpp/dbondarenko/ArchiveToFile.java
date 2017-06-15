@@ -150,7 +150,8 @@ public class ArchiveToFile {
                         // System.out.println(data);
                         String ostatok = null;
                         while (data != -2) {
-                            byte[] copyBytes = Arrays.copyOf(bytes, bytes.length);
+                            System.out.println(Arrays.toString(bytes));
+                            byte[] copyBytes = Arrays.copyOf(bytes, data);
                             if ((data = fileInputStream.read(bytes)) != -1) {
                                 if (ostatok != null) {
                                     bitSequence.insert(0, ostatok);
@@ -212,12 +213,13 @@ public class ArchiveToFile {
                                 //output.write(bytes);
                                 data = fileInputStream.read(bytes);*/
                             } else {
+                                String endCode = "";
+                                byte endByte = copyBytes[copyBytes.length - 2];
                                 if (copyBytes[copyBytes.length - 1] == 1) {
-                                    byte endByte = copyBytes[copyBytes.length - 2];
                                     String s = Integer.toBinaryString(endByte);
-                                    s = s.substring(1, s.length());
-                                    endByte = (byte) Integer.parseInt(s);
-                                    copyBytes[copyBytes.length - 2] = endByte;
+                                    endCode = s.substring(1, s.length());
+                                } else {
+                                    endCode = Integer.toBinaryString(endByte);
                                 }
                                 if (ostatok != null) {
                                     bitSequence.insert(0, ostatok);
@@ -225,10 +227,11 @@ public class ArchiveToFile {
                                 }
                                 ArrayList<Byte> arrayList1 = new ArrayList<>();
                                 // System.out.println(Arrays.toString(bytes));
-                                for (int i = 0; i < copyBytes.length - 1; i++) {
+                                for (int i = 0; i < copyBytes.length - 2; i++) {
                                     byte b = copyBytes[i];
                                     bitSequence.append(toBinaryStringFromByte(b));
                                 }
+                                bitSequence.append(endCode);
                                 int bitSequenceLength = 0;
                                 StringBuilder desiredBitSet = new StringBuilder();
                                 while (bitSequenceLength < bitSequence.length()) {
