@@ -14,10 +14,15 @@ import java.util.HashMap;
  * Created by Dmitro Bondarenko on 06.06.2017.
  */
 public class ArchiveToFile extends Utility {
-
+    // The table by which bytes are restored.
     private HashMap<String, Byte> decodingTable;
 
-    public void restoreFileFromArchive(String fileName) {
+    /**
+     * Restore file from archive.
+     *
+     * @param archiveName The name of the archive from which to restore the file.
+     */
+    public void restoreFileFromArchive(String archiveName) {
         try {
             final PipedOutputStream pipedOutputStream = new PipedOutputStream();
             final PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
@@ -27,9 +32,9 @@ public class ArchiveToFile extends Utility {
                     FileInputStream fileInputStream;
                     try {
                         System.out.println(MESSAGE_PLEASE_WAIT);
-                        fileInputStream = new FileInputStream(fileName);
+                        fileInputStream = new FileInputStream(archiveName);
                         int countByteOfTable = getCountByteOfTable(fileInputStream);
-                        restoreCodingTable(fileInputStream, countByteOfTable);
+                        restoreDecodingTable(fileInputStream, countByteOfTable);
                         decodeArchive(fileInputStream, pipedOutputStream);
                         fileInputStream.close();
                         pipedOutputStream.close();
@@ -42,7 +47,7 @@ public class ArchiveToFile extends Utility {
             Thread WriterThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    writeFile(createFileName(fileName), pipedInputStream,
+                    writeFile(createFileName(archiveName), pipedInputStream,
                             MESSAGE_FILE_CREATED, MESSAGE_FILE_COULD_NOT_BE_RESTORED);
                 }
             });
@@ -53,6 +58,12 @@ public class ArchiveToFile extends Utility {
         }
     }
 
+    /**
+     * Get the count of bytes of the table to decode.
+     *
+     * @param fileInputStream The stream for reading bytes from a file.
+     * @return The number of bytes you need to read to restore the table for decoding.
+     */
     private int getCountByteOfTable(FileInputStream fileInputStream) throws IOException {
         byte[] buffer = new byte[2];
         int bufferSize = fileInputStream.read(buffer);
@@ -65,7 +76,13 @@ public class ArchiveToFile extends Utility {
         return countByteOfTable;
     }
 
-    private void restoreCodingTable(FileInputStream fileInputStream, int countByteOfTable) throws IOException {
+    /**
+     * Restore the table for decoding.
+     *
+     * @param fileInputStream  The stream for reading bytes from a file.
+     * @param countByteOfTable The number of bytes you need to read to restore the table for decoding.
+     */
+    private void restoreDecodingTable(FileInputStream fileInputStream, int countByteOfTable) throws IOException {
         decodingTable = new HashMap<>();
         byte[] buffer = new byte[countByteOfTable];
         int bufferSize = fileInputStream.read(buffer);
@@ -81,17 +98,39 @@ public class ArchiveToFile extends Utility {
         }
     }
 
+    /**
+     * Translate the byte into a bit string representation.
+     * During the transfer in the high-order bits, the zeros do not disappear.
+     *
+     * @param oneByte The byte.
+     * @return The string of bits.
+     */
     private StringBuilder toBinaryStringFromByte(byte oneByte) {
         StringBuilder firstByte = new StringBuilder();
         firstByte.append(Integer.toBinaryString(oneByte & 255 | 256).substring(1));
         return firstByte;
     }
 
+    /**
+     * Remove the leading zeros.
+     *
+     * @param line The string consisting of bits.
+     * @return The string of bits.
+     */
     private String removeLeadingZeros(StringBuilder line) {
         int number = Integer.parseInt(String.valueOf(line), BINARY_SYSTEM);
         return Integer.toBinaryString(number);
     }
 
+    /**
+     * Decode the archive. From the file, the bits are read into the buffer.
+     * They are translated using the decoding table into a string sequence of bits.
+     * From this sequence, the bits of the original file are restored.
+     * These bits are transferred to the PipedInputStream pipeline stream for writing to the file.
+     *
+     * @param fileInputStream   The stream for reading bytes from a file.
+     * @param pipedOutputStream The pipeline stream that transfers bytes to a pipeline stream PipedInputStream.
+     */
     private void decodeArchive(FileInputStream fileInputStream, PipedOutputStream pipedOutputStream) throws IOException {
         StringBuilder bitSequence = new StringBuilder();
         byte[] buffer = new byte[BUFFER_SIZE_FOR_READING_AND_WRITING];
@@ -103,15 +142,23 @@ public class ArchiveToFile extends Utility {
                 createBitSequence(bitSequence, bitsResidue, bytesToDecode, bytesToDecode.length);
                 bitsResidue = restoreByte(pipedOutputStream, bitSequence);
             } else {
-                String endCode = getBinaryStringFromEndByte(bytesToDecode);
+                String bitsOfLastByte = getBinaryStringFromEndByte(bytesToDecode);
                 createBitSequence(bitSequence, bitsResidue, bytesToDecode, bytesToDecode.length - 2);
-                bitSequence.append(endCode);
+                bitSequence.append(bitsOfLastByte);
                 bitsResidue = restoreByte(pipedOutputStream, bitSequence);
                 bufferSize = -2;
             }
         }
     }
 
+    /**
+     * Create a bit sequence with bytes using a decoding table.
+     *
+     * @param bitSequence     The string for storing the bit sequence.
+     * @param bitsResidue     The bits residue from the previous bit sequence.
+     * @param bytesToDecode   The array of bytes to convert to a bit sequence.
+     * @param iterationsCount The count of iterations for converting bytes to bit sequence.
+     */
     private void createBitSequence(StringBuilder bitSequence, String bitsResidue, byte[] bytesToDecode,
                                    int iterationsCount) {
         if (bitsResidue != null) {
@@ -123,6 +170,13 @@ public class ArchiveToFile extends Utility {
         }
     }
 
+    /**
+     * Restore the byte using the decoding table.
+     *
+     * @param pipedOutputStream The pipeline stream that transfers bytes to a pipeline stream PipedInputStream.
+     * @param bitSequence       The string for storing the bit sequence.
+     * @return The bits residue from the bit sequence.
+     */
     private String restoreByte(PipedOutputStream pipedOutputStream, StringBuilder bitSequence) throws IOException {
         String bitsResidue;
         ArrayList<Byte> bytesListToWrite = new ArrayList<>();
@@ -149,6 +203,12 @@ public class ArchiveToFile extends Utility {
         return bitsResidue;
     }
 
+    /**
+     * Create an array of bits from the list of bits.
+     *
+     * @param bytesList The list of bits.
+     * @return The array of bits.
+     */
     private byte[] fromListToArray(ArrayList<Byte> bytesList) {
         byte[] bytes = new byte[bytesList.size()];
         for (int i = 0; i < bytes.length; i++) {
@@ -157,21 +217,33 @@ public class ArchiveToFile extends Utility {
         return bytes;
     }
 
+    /**
+     * Get the bit sequence from the last byte.
+     *
+     * @param bytesToDecode An array of bytes to decode.
+     * @return The bit sequence from the last byte.
+     */
     private String getBinaryStringFromEndByte(byte[] bytesToDecode) {
-        String endCode;
+        String bitsOfLastByte;
         byte endByte = bytesToDecode[bytesToDecode.length - 2];
         if (bytesToDecode[bytesToDecode.length - 1] == 1) {
             String s = Integer.toBinaryString(endByte);
-            endCode = s.substring(1, s.length());
+            bitsOfLastByte = s.substring(1, s.length());
         } else {
-            endCode = Integer.toBinaryString(endByte);
+            bitsOfLastByte = Integer.toBinaryString(endByte);
         }
-        return endCode;
+        return bitsOfLastByte;
     }
 
+    /**
+     * Create a new file name.
+     *
+     * @param archiveName The name of the archive from which the file is restored.
+     * @return The new file name.
+     */
     private String createFileName(String archiveName) {
         String fileName = archiveName.substring(0, archiveName.length() - ADDITIONAL_ARCHIVE_EXTENSION.length());
         String[] nameAndExtension = fileName.split("\\.");
-        return nameAndExtension[0] + "copy." + nameAndExtension[1];
+        return nameAndExtension[0] + ENDING_NAME_OF_NEW_FILE + nameAndExtension[1];
     }
 }

@@ -12,7 +12,7 @@ import java.util.*;
  * Created by Dmitro Bondarenko on 02.06.2017.
  */
 public class FileToArchive extends Utility {
-    // The table by which the bytes are encoded.
+    // The table by which the bytes are coded.
     private HashMap<Byte, String> codingTable;
 
     /**
