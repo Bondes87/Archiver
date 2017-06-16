@@ -4,6 +4,7 @@ import java.util.Objects;
 
 /**
  * File: com.shpp.dbondarenko.Main.java
+ * The сlass, which starts the archiver.
  * Created by Dmitro Bondarenko on 02.06.2017.
  */
 public class Main {

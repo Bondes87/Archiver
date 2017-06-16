@@ -1,6 +1,9 @@
 package com.shpp.dbondarenko;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.*;
 
 /**
@@ -8,15 +11,7 @@ import java.util.*;
  * Class in which an archive is created from the file.
  * Created by Dmitro Bondarenko on 02.06.2017.
  */
-public class FileToArchive {
-    private static final int BUFFER_SIZE_FOR_READING_AND_WRITING = 1024;
-    private static final int COUNT_OF_BITS_IN_BYTE = 8;
-    private static final int BINARY_SYSTEM = 2;
-    private static final String ADDITIONAL_ARCHIVE_EXTENSION = "-bds";
-    private static final String MESSAGE_PLEASE_WAIT = "Please wait!!!";
-    private static final String MESSAGE_FILE_NOT_FOUND = "Sorry. Such file was not found.";
-    private static final String MESSAGE_ARCHIVE_CREATED = "Archive created: ";
-    private static final String MESSAGE_CREATE_AN_ARCHIVE_FAILED = "Sorry. Create an archive failed.";
+public class FileToArchive extends Utility {
 
     private HashMap<Byte, String> codingTable;
 
@@ -44,8 +39,7 @@ public class FileToArchive {
             @Override
             public void run() {
                 try {
-                    ArrayList<HuffmanTreeNode> treeLeaves = createLeavesOfHuffmanTree
-                            (input);
+                    ArrayList<HuffmanTreeNode> treeLeaves = createLeavesOfHuffmanTree(input);
                     HuffmanTreeNode huffmanTreeRoot = buildHuffmanTree(treeLeaves);
                     codingTable = createHuffmanTable(treeLeaves, huffmanTreeRoot);
                 } catch (IOException e) {
@@ -70,7 +64,8 @@ public class FileToArchive {
         Thread WriterThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                writeFile(createNewFileName(fileName), pipedInputStream);
+                writeFile(createNewFileName(fileName), pipedInputStream,
+                        MESSAGE_ARCHIVE_CREATED, MESSAGE_CREATE_AN_ARCHIVE_FAILED);
             }
         });
         codingFileThread.start();
@@ -267,31 +262,6 @@ public class FileToArchive {
             bytesFromCodingTable[index++] = secondByte;
         }
         return bytesFromCodingTable;
-    }
-
-    private void writeFile(String fileName, PipedInputStream pipedInputStream) {
-        FileOutputStream fileOutputStream;
-        try {
-            File archive = new File(fileName);
-            if (archive.exists()) {
-                archive.delete();
-            }
-            archive.createNewFile();
-            fileOutputStream = new FileOutputStream(archive, true);
-            byte[] buffer = new byte[BUFFER_SIZE_FOR_READING_AND_WRITING];
-            int bufferSize = pipedInputStream.read(buffer);
-            while (bufferSize != -1) {
-                byte[] bytesToWrite = Arrays.copyOfRange(buffer, 0, bufferSize);
-                fileOutputStream.write(bytesToWrite);
-                bufferSize = pipedInputStream.read(buffer);
-            }
-            fileOutputStream.close();
-            pipedInputStream.close();
-            System.out.println(MESSAGE_ARCHIVE_CREATED + fileName);
-        } catch (IOException e) {
-            System.out.println(MESSAGE_CREATE_AN_ARCHIVE_FAILED);
-            e.printStackTrace();
-        }
     }
 
     private String createNewFileName(String fileName) {

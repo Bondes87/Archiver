@@ -1,6 +1,9 @@
 package com.shpp.dbondarenko;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -10,14 +13,7 @@ import java.util.HashMap;
  * Class in which the file from the archive is restored.
  * Created by Dmitro Bondarenko on 06.06.2017.
  */
-public class ArchiveToFile {
-    private static final int BUFFER_SIZE_FOR_READING_AND_WRITING = 1024;
-    private static final int BINARY_SYSTEM = 2;
-    private static final String ADDITIONAL_ARCHIVE_EXTENSION = "-bds";
-    private static final String MESSAGE_PLEASE_WAIT = "Please wait!!!";
-    private static final String MESSAGE_FILE_CREATED = "File created: ";
-    private static final String MESSAGE_FILE_COULD_NOT_BE_RESTORED = "Sorry. The file could not be restored";
-    private static final String MESSAGE_FILE_NOT_FOUND = "Sorry. Such file was not found.";
+public class ArchiveToFile extends Utility {
 
     private HashMap<String, Byte> decodingTable;
 
@@ -46,7 +42,8 @@ public class ArchiveToFile {
             Thread WriterThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    writeFile(createFileName(fileName), pipedInputStream);
+                    writeFile(createFileName(fileName), pipedInputStream,
+                            MESSAGE_FILE_CREATED, MESSAGE_FILE_COULD_NOT_BE_RESTORED);
                 }
             });
             ReaderThread.start();
@@ -170,31 +167,6 @@ public class ArchiveToFile {
             endCode = Integer.toBinaryString(endByte);
         }
         return endCode;
-    }
-
-    private void writeFile(String fileName, PipedInputStream pipedInputStream) {
-        FileOutputStream outputStream;
-        try {
-            File file = new File(fileName);
-            file.createNewFile();
-            if (file.exists()) {
-                file.delete();
-            }
-            outputStream = new FileOutputStream(file, true);
-            byte[] buffer = new byte[BUFFER_SIZE_FOR_READING_AND_WRITING];
-            int bufferSize = pipedInputStream.read(buffer);
-            while (bufferSize != -1) {
-                byte[] bytesToWrite = Arrays.copyOfRange(buffer, 0, bufferSize);
-                outputStream.write(bytesToWrite);
-                bufferSize = pipedInputStream.read(buffer);
-            }
-            outputStream.close();
-            pipedInputStream.close();
-            System.out.println(MESSAGE_FILE_CREATED + fileName);
-        } catch (IOException e) {
-            System.out.println(MESSAGE_FILE_COULD_NOT_BE_RESTORED);
-            e.printStackTrace();
-        }
     }
 
     private String createFileName(String archiveName) {
