@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 /**
  * File: HuffmanTreeNode.java
+ * The class which is the model of the node of the Huffman tree.
  * Created by Dmitro Bondarenko on 05.06.2017.
  */
 public class HuffmanTreeNode implements Comparable<HuffmanTreeNode> {

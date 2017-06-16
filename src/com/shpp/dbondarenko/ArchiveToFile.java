@@ -11,7 +11,14 @@ import java.util.HashMap;
  * Created by Dmitro Bondarenko on 06.06.2017.
  */
 public class ArchiveToFile {
-    private static final String FILE_EXTENSION = "-bds";
+    private static final int BUFFER_SIZE_FOR_READING_AND_WRITING = 1024;
+    private static final int BINARY_SYSTEM = 2;
+    private static final String ADDITIONAL_ARCHIVE_EXTENSION = "-bds";
+    private static final String MESSAGE_PLEASE_WAIT = "Please wait!!!";
+    private static final String MESSAGE_FILE_CREATED = "File created: ";
+    private static final String MESSAGE_FILE_COULD_NOT_BE_RESTORED = "Sorry. The file could not be restored";
+    private static final String MESSAGE_FILE_NOT_FOUND = "Sorry. Such file was not found.";
+
     private HashMap<String, Byte> decodingTable;
 
     public void restoreFileFromArchive(String fileName) {
@@ -23,7 +30,7 @@ public class ArchiveToFile {
                 public void run() {
                     FileInputStream fileInputStream;
                     try {
-                        System.out.println("Please wait!!!");
+                        System.out.println(MESSAGE_PLEASE_WAIT);
                         fileInputStream = new FileInputStream(fileName);
                         int countByteOfTable = getCountByteOfTable(fileInputStream);
                         restoreCodingTable(fileInputStream, countByteOfTable);
@@ -31,6 +38,7 @@ public class ArchiveToFile {
                         fileInputStream.close();
                         pipedOutputStream.close();
                     } catch (IOException e) {
+                        System.out.println(MESSAGE_FILE_NOT_FOUND);
                         e.printStackTrace();
                     }
                 }
@@ -38,13 +46,12 @@ public class ArchiveToFile {
             Thread WriterThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    writeFile(fileName, pipedInputStream);
+                    writeFile(createFileName(fileName), pipedInputStream);
                 }
             });
             ReaderThread.start();
             WriterThread.start();
         } catch (IOException e) {
-            System.out.println("Sorry. Create an archive failed.");
             e.printStackTrace();
         }
     }
@@ -56,7 +63,7 @@ public class ArchiveToFile {
         if (bufferSize != -1) {
             StringBuilder firstByte = toBinaryStringFromByte(buffer[0]);
             StringBuilder secondByte = toBinaryStringFromByte(buffer[1]);
-            countByteOfTable = Integer.parseInt(String.valueOf(firstByte.append(secondByte)), 2);
+            countByteOfTable = Integer.parseInt(String.valueOf(firstByte.append(secondByte)), BINARY_SYSTEM);
         }
         return countByteOfTable;
     }
@@ -84,13 +91,13 @@ public class ArchiveToFile {
     }
 
     private String removeLeadingZeros(StringBuilder line) {
-        int number = Integer.parseInt(String.valueOf(line), 2);
+        int number = Integer.parseInt(String.valueOf(line), BINARY_SYSTEM);
         return Integer.toBinaryString(number);
     }
 
     private void decodeArchive(FileInputStream fileInputStream, PipedOutputStream pipedOutputStream) throws IOException {
         StringBuilder bitSequence = new StringBuilder();
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[BUFFER_SIZE_FOR_READING_AND_WRITING];
         int bufferSize = fileInputStream.read(buffer);
         String bitsResidue = null;
         while (bufferSize != -2) {
@@ -168,13 +175,13 @@ public class ArchiveToFile {
     private void writeFile(String fileName, PipedInputStream pipedInputStream) {
         FileOutputStream outputStream;
         try {
-            File file = new File(createFileName(fileName));
+            File file = new File(fileName);
             file.createNewFile();
             if (file.exists()) {
                 file.delete();
             }
             outputStream = new FileOutputStream(file, true);
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[BUFFER_SIZE_FOR_READING_AND_WRITING];
             int bufferSize = pipedInputStream.read(buffer);
             while (bufferSize != -1) {
                 byte[] bytesToWrite = Arrays.copyOfRange(buffer, 0, bufferSize);
@@ -183,15 +190,15 @@ public class ArchiveToFile {
             }
             outputStream.close();
             pipedInputStream.close();
-            System.out.println("file write finish");
+            System.out.println(MESSAGE_FILE_CREATED + fileName);
         } catch (IOException e) {
-            System.out.println("Sorry. Such file was not found.");
+            System.out.println(MESSAGE_FILE_COULD_NOT_BE_RESTORED);
             e.printStackTrace();
         }
     }
 
     private String createFileName(String archiveName) {
-        String fileName = archiveName.substring(0, archiveName.length() - FILE_EXTENSION.length());
+        String fileName = archiveName.substring(0, archiveName.length() - ADDITIONAL_ARCHIVE_EXTENSION.length());
         String[] nameAndExtension = fileName.split("\\.");
         return nameAndExtension[0] + "copy." + nameAndExtension[1];
     }

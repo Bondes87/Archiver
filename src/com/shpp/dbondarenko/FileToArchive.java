@@ -9,15 +9,20 @@ import java.util.*;
  * Created by Dmitro Bondarenko on 02.06.2017.
  */
 public class FileToArchive {
-    private static final String FILE_EXTENSION = "-bds";
     private static final int BUFFER_SIZE_FOR_READING_AND_WRITING = 1024;
     private static final int COUNT_OF_BITS_IN_BYTE = 8;
     private static final int BINARY_SYSTEM = 2;
+    private static final String ADDITIONAL_ARCHIVE_EXTENSION = "-bds";
+    private static final String MESSAGE_PLEASE_WAIT = "Please wait!!!";
+    private static final String MESSAGE_FILE_NOT_FOUND = "Sorry. Such file was not found.";
+    private static final String MESSAGE_ARCHIVE_CREATED = "Archive created: ";
+    private static final String MESSAGE_CREATE_AN_ARCHIVE_FAILED = "Sorry. Create an archive failed.";
+
     private HashMap<Byte, String> codingTable;
 
     public void createArchiveFromFile(String fileName) {
         try {
-            System.out.println("Please wait!!!");
+            System.out.println(MESSAGE_PLEASE_WAIT);
             createCodingTable(fileName);
             encodeFile(fileName);
         } catch (IOException | InterruptedException e) {
@@ -65,9 +70,8 @@ public class FileToArchive {
         Thread WriterThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                writeFile(fileName, pipedInputStream);
+                writeFile(createNewFileName(fileName), pipedInputStream);
             }
-
         });
         codingFileThread.start();
         WriterThread.start();
@@ -87,7 +91,7 @@ public class FileToArchive {
             fileInputStream.close();
             output.close();
         } catch (IOException e) {
-            System.out.println("Sorry. Such file was not found.");
+            System.out.println(MESSAGE_FILE_NOT_FOUND);
             e.printStackTrace();
         }
     }
@@ -268,8 +272,7 @@ public class FileToArchive {
     private void writeFile(String fileName, PipedInputStream pipedInputStream) {
         FileOutputStream fileOutputStream;
         try {
-            String archiveName = fileName + FILE_EXTENSION;
-            File archive = new File(archiveName);
+            File archive = new File(fileName);
             if (archive.exists()) {
                 archive.delete();
             }
@@ -284,10 +287,14 @@ public class FileToArchive {
             }
             fileOutputStream.close();
             pipedInputStream.close();
-            System.out.println("Archive " + archiveName + " created");
+            System.out.println(MESSAGE_ARCHIVE_CREATED + fileName);
         } catch (IOException e) {
-            System.out.println("Sorry. Create an archive failed.");
+            System.out.println(MESSAGE_CREATE_AN_ARCHIVE_FAILED);
             e.printStackTrace();
         }
+    }
+
+    private String createNewFileName(String fileName) {
+        return fileName + ADDITIONAL_ARCHIVE_EXTENSION;
     }
 }
