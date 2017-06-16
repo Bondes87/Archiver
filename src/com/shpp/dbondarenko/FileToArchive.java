@@ -5,6 +5,7 @@ import java.util.*;
 
 /**
  * File: com.shpp.dbondarenko.FileToArchive.java
+ * Class in which an archive is created from the file.
  * Created by Dmitro Bondarenko on 02.06.2017.
  */
 public class FileToArchive {

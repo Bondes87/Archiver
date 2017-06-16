@@ -7,112 +7,29 @@ import java.util.HashMap;
 
 /**
  * File: ArchiveToFile.java
+ * Class in which the file from the archive is restored.
  * Created by Dmitro Bondarenko on 06.06.2017.
  */
 public class ArchiveToFile {
     private static final String FILE_EXTENSION = "-bds";
-    private HashMap<String, Byte> codingTable;
+    private HashMap<String, Byte> decodingTable;
 
     public void restoreFileFromArchive(String fileName) {
-        codingTable = new HashMap<>();
         try {
-            final PipedOutputStream output = new PipedOutputStream();
-            final PipedInputStream input = new PipedInputStream(output);
+            final PipedOutputStream pipedOutputStream = new PipedOutputStream();
+            final PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
             Thread ReaderThread = new Thread(new Runnable() {
-                private FileInputStream fileInputStream;
-
                 @Override
                 public void run() {
+                    FileInputStream fileInputStream;
                     try {
-                        StringBuilder bitSequence = new StringBuilder();
+                        System.out.println("Please wait!!!");
                         fileInputStream = new FileInputStream(fileName);
-                        byte[] bytes = new byte[2];
-                        int data = fileInputStream.read(bytes);
-                        int countByteOfTable = 0;
-                        if (data != -1) {
-                            countByteOfTable = getCountByteOfTable(bytes[0], bytes[1]);
-                        }
-                        bytes = new byte[countByteOfTable];
-                        data = fileInputStream.read(bytes);
-                        if (data != -1) {
-                            restoreCodingTable(bytes);
-                        }
-                        bytes = new byte[1024];
-                        data = fileInputStream.read(bytes);
-                        String ostatok = null;
-                        while (data != -2) {
-                            byte[] copyBytes = Arrays.copyOf(bytes, data);
-                            if ((data = fileInputStream.read(bytes)) != -1) {
-                                if (ostatok != null) {
-                                    bitSequence.append(ostatok);
-                                    ostatok = null;
-                                }
-                                ArrayList<Byte> arrayList1 = new ArrayList<>();
-                                for (byte b : copyBytes) {
-                                    bitSequence.append(toBinaryStringFromByte(b));
-                                }
-                                int bitSequenceLength = 0;
-                                StringBuilder desiredBitSet = new StringBuilder();
-                                while (bitSequenceLength < bitSequence.length()) {
-                                    for (int i = bitSequenceLength; i < bitSequence.length(); i++) {
-                                        desiredBitSet.append(bitSequence.charAt(i));
-                                        if (codingTable.containsKey(String.valueOf(desiredBitSet))) {
-                                            arrayList1.add(codingTable.get(String.valueOf(desiredBitSet)));
-                                            bitSequenceLength = i + 1;
-                                            desiredBitSet.setLength(0);
-                                            break;
-                                        }
-                                    }
-                                    if (desiredBitSet.length() > 0) {
-                                        ostatok = String.valueOf(desiredBitSet);
-                                        bitSequenceLength += desiredBitSet.length();
-                                    }
-                                }
-                                output.write(fromListToArray(arrayList1));
-                                bitSequence.setLength(0);
-                            } else {
-                                String endCode;
-                                byte endByte = copyBytes[copyBytes.length - 2];
-                                if (copyBytes[copyBytes.length - 1] == 1) {
-                                    String s = Integer.toBinaryString(endByte);
-                                    endCode = s.substring(1, s.length());
-                                } else {
-                                    endCode = Integer.toBinaryString(endByte);
-                                }
-                                if (ostatok != null) {
-                                    bitSequence.insert(0, ostatok);
-                                    ostatok = null;
-                                }
-                                ArrayList<Byte> arrayList1 = new ArrayList<>();
-                                for (int i = 0; i < copyBytes.length - 2; i++) {
-                                    byte b = copyBytes[i];
-                                    bitSequence.append(toBinaryStringFromByte(b));
-                                }
-                                bitSequence.append(endCode);
-                                int bitSequenceLength = 0;
-                                StringBuilder desiredBitSet = new StringBuilder();
-                                while (bitSequenceLength < bitSequence.length()) {
-                                    for (int i = bitSequenceLength; i < bitSequence.length(); i++) {
-                                        desiredBitSet.append(bitSequence.charAt(i));
-                                        if (codingTable.containsKey(String.valueOf(desiredBitSet))) {
-                                            arrayList1.add(codingTable.get(String.valueOf(desiredBitSet)));
-                                            bitSequenceLength = i + 1;
-                                            desiredBitSet = new StringBuilder();
-                                            break;
-                                        }
-                                    }
-                                    if (desiredBitSet.length() > 0) {
-                                        ostatok = String.valueOf(desiredBitSet);
-                                    }
-                                }
-                                output.write(fromListToArray(arrayList1));
-                                bitSequence.setLength(0);
-                                data = -2;
-                            }
-                        }
-                        System.out.println("archiving finish");
+                        int countByteOfTable = getCountByteOfTable(fileInputStream);
+                        restoreCodingTable(fileInputStream, countByteOfTable);
+                        decodeArchive(fileInputStream, pipedOutputStream);
                         fileInputStream.close();
-                        output.close();
+                        pipedOutputStream.close();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -121,31 +38,9 @@ public class ArchiveToFile {
             Thread WriterThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        File file = new File(createFileName(fileName));
-                        file.createNewFile();
-                        if (file.exists()) {
-                            file.delete();
-                        }
-                        FileOutputStream outputStream;
-                        outputStream = new FileOutputStream(file, true);
-                        byte bytes[] = new byte[1024];
-                        int data = input.read(bytes);
-                        while (data != -1) {
-                            byte[] a = Arrays.copyOfRange(bytes, 0, data);
-                            outputStream.write(a);
-                            data = input.read(bytes);
-                        }
-                        outputStream.close();
-                        input.close();
-                        System.out.println("file write finish");
-                    } catch (IOException e) {
-                        System.out.println("Sorry. Such file was not found.");
-                        e.printStackTrace();
-                    }
+                    writeFile(fileName, pipedInputStream);
                 }
             });
-
             ReaderThread.start();
             WriterThread.start();
         } catch (IOException e) {
@@ -154,15 +49,38 @@ public class ArchiveToFile {
         }
     }
 
-    private void restoreCodingTable(byte[] bytesOfTable) {
-        for (int j = 0, i = 0; i < bytesOfTable.length; j++, i = j * 3) {
-            byte firstByte = bytesOfTable[i];
-            StringBuilder secondByte = toBinaryStringFromByte(bytesOfTable[i + 1]);
-            StringBuilder thirdByte = toBinaryStringFromByte(bytesOfTable[i + 2]);
-            String idByte = removeLeadingZeros(secondByte.append(thirdByte));
-            idByte = idByte.substring(1);
-            codingTable.put(idByte, firstByte);
+    private int getCountByteOfTable(FileInputStream fileInputStream) throws IOException {
+        byte[] buffer = new byte[2];
+        int bufferSize = fileInputStream.read(buffer);
+        int countByteOfTable = 0;
+        if (bufferSize != -1) {
+            StringBuilder firstByte = toBinaryStringFromByte(buffer[0]);
+            StringBuilder secondByte = toBinaryStringFromByte(buffer[1]);
+            countByteOfTable = Integer.parseInt(String.valueOf(firstByte.append(secondByte)), 2);
         }
+        return countByteOfTable;
+    }
+
+    private void restoreCodingTable(FileInputStream fileInputStream, int countByteOfTable) throws IOException {
+        decodingTable = new HashMap<>();
+        byte[] buffer = new byte[countByteOfTable];
+        int bufferSize = fileInputStream.read(buffer);
+        if (bufferSize != -1) {
+            for (int j = 0, i = 0; i < buffer.length; j++, i = j * 3) {
+                byte firstByte = buffer[i];
+                StringBuilder secondByte = toBinaryStringFromByte(buffer[i + 1]);
+                StringBuilder thirdByte = toBinaryStringFromByte(buffer[i + 2]);
+                String idByte = removeLeadingZeros(secondByte.append(thirdByte));
+                idByte = idByte.substring(1);
+                decodingTable.put(idByte, firstByte);
+            }
+        }
+    }
+
+    private StringBuilder toBinaryStringFromByte(byte oneByte) {
+        StringBuilder firstByte = new StringBuilder();
+        firstByte.append(Integer.toBinaryString(oneByte & 255 | 256).substring(1));
+        return firstByte;
     }
 
     private String removeLeadingZeros(StringBuilder line) {
@@ -170,10 +88,61 @@ public class ArchiveToFile {
         return Integer.toBinaryString(number);
     }
 
-    private String createFileName(String archiveName) {
-        String fileName = archiveName.substring(0, archiveName.length() - FILE_EXTENSION.length());
-        String[] nameAndExtension = fileName.split("\\.");
-        return nameAndExtension[0] + "copy." + nameAndExtension[1];
+    private void decodeArchive(FileInputStream fileInputStream, PipedOutputStream pipedOutputStream) throws IOException {
+        StringBuilder bitSequence = new StringBuilder();
+        byte[] buffer = new byte[1024];
+        int bufferSize = fileInputStream.read(buffer);
+        String bitsResidue = null;
+        while (bufferSize != -2) {
+            byte[] bytesToDecode = Arrays.copyOf(buffer, bufferSize);
+            if ((bufferSize = fileInputStream.read(buffer)) != -1) {
+                createBitSequence(bitSequence, bitsResidue, bytesToDecode, bytesToDecode.length);
+                bitsResidue = restoreByte(pipedOutputStream, bitSequence);
+            } else {
+                String endCode = getBinaryStringFromEndByte(bytesToDecode);
+                createBitSequence(bitSequence, bitsResidue, bytesToDecode, bytesToDecode.length - 2);
+                bitSequence.append(endCode);
+                bitsResidue = restoreByte(pipedOutputStream, bitSequence);
+                bufferSize = -2;
+            }
+        }
+    }
+
+    private void createBitSequence(StringBuilder bitSequence, String bitsResidue, byte[] bytesToDecode,
+                                   int iterationsCount) {
+        if (bitsResidue != null) {
+            bitSequence.append(bitsResidue);
+        }
+        for (int i = 0; i < iterationsCount; i++) {
+            byte oneByte = bytesToDecode[i];
+            bitSequence.append(toBinaryStringFromByte(oneByte));
+        }
+    }
+
+    private String restoreByte(PipedOutputStream pipedOutputStream, StringBuilder bitSequence) throws IOException {
+        String bitsResidue;
+        ArrayList<Byte> bytesListToWrite = new ArrayList<>();
+        int counter = 0;
+        StringBuilder requiredBitSet = new StringBuilder();
+        bitsResidue = null;
+        while (counter < bitSequence.length()) {
+            for (int i = counter; i < bitSequence.length(); i++) {
+                requiredBitSet.append(bitSequence.charAt(i));
+                if (decodingTable.containsKey(String.valueOf(requiredBitSet))) {
+                    bytesListToWrite.add(decodingTable.get(String.valueOf(requiredBitSet)));
+                    counter = i + 1;
+                    requiredBitSet.setLength(0);
+                    break;
+                }
+            }
+            if (requiredBitSet.length() > 0) {
+                bitsResidue = String.valueOf(requiredBitSet);
+                counter += requiredBitSet.length();
+            }
+        }
+        pipedOutputStream.write(fromListToArray(bytesListToWrite));
+        bitSequence.setLength(0);
+        return bitsResidue;
     }
 
     private byte[] fromListToArray(ArrayList<Byte> bytesList) {
@@ -184,16 +153,46 @@ public class ArchiveToFile {
         return bytes;
     }
 
-    private int getCountByteOfTable(byte firstBit, byte secondBit) {
-        StringBuilder firstByte = toBinaryStringFromByte(firstBit);
-        StringBuilder secondByte = toBinaryStringFromByte(secondBit);
-        return Integer.parseInt(String.valueOf(firstByte.append(secondByte)), 2);
+    private String getBinaryStringFromEndByte(byte[] bytesToDecode) {
+        String endCode;
+        byte endByte = bytesToDecode[bytesToDecode.length - 2];
+        if (bytesToDecode[bytesToDecode.length - 1] == 1) {
+            String s = Integer.toBinaryString(endByte);
+            endCode = s.substring(1, s.length());
+        } else {
+            endCode = Integer.toBinaryString(endByte);
+        }
+        return endCode;
     }
 
-    private StringBuilder toBinaryStringFromByte(byte oneByte) {
-        StringBuilder firstByte = new StringBuilder();
-        firstByte.append(Integer.toBinaryString(oneByte & 255 | 256).substring(1));
-        String s = Integer.toBinaryString(oneByte);
-        return firstByte;
+    private void writeFile(String fileName, PipedInputStream pipedInputStream) {
+        FileOutputStream outputStream;
+        try {
+            File file = new File(createFileName(fileName));
+            file.createNewFile();
+            if (file.exists()) {
+                file.delete();
+            }
+            outputStream = new FileOutputStream(file, true);
+            byte[] buffer = new byte[1024];
+            int bufferSize = pipedInputStream.read(buffer);
+            while (bufferSize != -1) {
+                byte[] bytesToWrite = Arrays.copyOfRange(buffer, 0, bufferSize);
+                outputStream.write(bytesToWrite);
+                bufferSize = pipedInputStream.read(buffer);
+            }
+            outputStream.close();
+            pipedInputStream.close();
+            System.out.println("file write finish");
+        } catch (IOException e) {
+            System.out.println("Sorry. Such file was not found.");
+            e.printStackTrace();
+        }
+    }
+
+    private String createFileName(String archiveName) {
+        String fileName = archiveName.substring(0, archiveName.length() - FILE_EXTENSION.length());
+        String[] nameAndExtension = fileName.split("\\.");
+        return nameAndExtension[0] + "copy." + nameAndExtension[1];
     }
 }
