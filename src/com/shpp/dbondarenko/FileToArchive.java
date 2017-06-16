@@ -12,9 +12,14 @@ import java.util.*;
  * Created by Dmitro Bondarenko on 02.06.2017.
  */
 public class FileToArchive extends Utility {
-
+    // The table by which the bytes are encoded.
     private HashMap<Byte, String> codingTable;
 
+    /**
+     * Create an archive from a file.
+     *
+     * @param fileName The name of the file from which the archive is created.
+     */
     public void createArchiveFromFile(String fileName) {
         try {
             System.out.println(MESSAGE_PLEASE_WAIT);
@@ -24,6 +29,13 @@ public class FileToArchive extends Utility {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Create a Huffman table. Two pipeline streams are created here: one reads the file,
+     * the other creates a Huffman table based on the data received from the first thread.
+     *
+     * @param fileName The name of the file from which the archive is created.
+     */
 
     private void createCodingTable(String fileName) throws IOException,
             InterruptedException {
@@ -52,6 +64,13 @@ public class FileToArchive extends Utility {
         createCodingTableThread.join();
     }
 
+    /**
+     * Encoding bytes from a file. Two pipeline streams are created here:
+     * one reads the file and encodes the bytes using the Huffman table,
+     * the other writes down the data received from the first stream to the file.
+     *
+     * @param fileName The name of the file from which the archive is created.
+     */
     private void encodeFile(String fileName) throws IOException {
         final PipedOutputStream pipedOutputStream = new PipedOutputStream();
         final PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
@@ -72,6 +91,12 @@ public class FileToArchive extends Utility {
         WriterThread.start();
     }
 
+    /**
+     * Reads the bytes from the file and passes them to another pipeline stream.
+     *
+     * @param fileName The name of the file from which the archive is created.
+     * @param output   The pipeline stream that transfers bytes to a pipeline stream PipedInputStream.
+     */
     private void readFile(String fileName, PipedOutputStream output) {
         FileInputStream fileInputStream;
         try {
@@ -91,6 +116,13 @@ public class FileToArchive extends Utility {
         }
     }
 
+    /**
+     * Create leaves of the Huffman tree. Returns a list of created leaves based on the data received
+     * from the conveyor stream PipedOutputStream.
+     *
+     * @param input The pipeline stream that receives the bytes from the PipedOutputStream pipeline stream.
+     * @return List of Huffman tree leaves.
+     */
     private ArrayList<HuffmanTreeNode> createLeavesOfHuffmanTree(PipedInputStream input)
             throws IOException {
         HashMap<Byte, HuffmanTreeNode> treeLeavesMap = new HashMap<>();
@@ -116,6 +148,12 @@ public class FileToArchive extends Utility {
         return treeLeaves;
     }
 
+    /**
+     * Build a Huffman tree from the resulting leaves. Return the root of the Huffman tree.
+     *
+     * @param treeLeaves The list of Huffman tree leaves.
+     * @return The root of the Huffman tree.
+     */
     private HuffmanTreeNode buildHuffmanTree(ArrayList<HuffmanTreeNode> treeLeaves) {
         ArrayList<HuffmanTreeNode> treeNodes = new ArrayList<>(treeLeaves);
         while (treeNodes.size() > 1) {
@@ -141,6 +179,14 @@ public class FileToArchive extends Utility {
         return treeNodes.get(0);
     }
 
+    /**
+     * Create a Huffman table. The keys of the table are the bytes received from the leaves,
+     * and the values are the binary code obtained with the help of the Huffman tree.
+     *
+     * @param treeLeaves      The list of Huffman tree leaves.
+     * @param huffmanTreeRoot The Huffman tree root.
+     * @return The Huffman table.
+     */
     private HashMap<Byte, String> createHuffmanTable(ArrayList<HuffmanTreeNode> treeLeaves,
                                                      HuffmanTreeNode huffmanTreeRoot) {
         HashMap<Byte, String> huffmanTable = new HashMap<>();
@@ -152,23 +198,38 @@ public class FileToArchive extends Utility {
         return huffmanTable;
     }
 
-    private String createIdByte(Byte oneByte, HuffmanTreeNode hafmannTreeRoot) {
+    /**
+     * Create a binary code for bits using the Huffman tree.
+     *
+     * @param oneByte         The byte received from Huffman's leaf.
+     * @param huffmanTreeRoot The Huffman tree root.
+     * @return The string with a bit code.
+     */
+    private String createIdByte(Byte oneByte, HuffmanTreeNode huffmanTreeRoot) {
         String idByte = "";
-        if (hafmannTreeRoot.getLeftChild() != null &&
-                hafmannTreeRoot.getLeftChild().getBytes().contains(oneByte)) {
-            idByte = "0" + createIdByte(oneByte, hafmannTreeRoot.getLeftChild());
+        if (huffmanTreeRoot.getLeftChild() != null &&
+                huffmanTreeRoot.getLeftChild().getBytes().contains(oneByte)) {
+            idByte = "0" + createIdByte(oneByte, huffmanTreeRoot.getLeftChild());
         }
-        if (hafmannTreeRoot.getRightChild() != null &&
-                hafmannTreeRoot.getRightChild().getBytes().contains(oneByte)) {
-            idByte = "1" + createIdByte(oneByte, hafmannTreeRoot.getRightChild());
+        if (huffmanTreeRoot.getRightChild() != null &&
+                huffmanTreeRoot.getRightChild().getBytes().contains(oneByte)) {
+            idByte = "1" + createIdByte(oneByte, huffmanTreeRoot.getRightChild());
         }
         return idByte;
     }
 
+
+    /**
+     * Create bytes for writing and send to write.
+     *
+     * @param pipedOutputStream The pipeline stream that transfers bytes to a pipeline stream PipedInputStream.
+     * @param fileName          The name of the file from which the archive is created.
+     */
     private void createBytesForWriting(PipedOutputStream pipedOutputStream, String
             fileName) {
         try {
             FileInputStream fileInputStream;
+            // Send coding table bytes for writing to file.
             pipedOutputStream.write(getBytesForCodingTable());
             StringBuilder bitSequence = new StringBuilder();
             fileInputStream = new FileInputStream(fileName);
@@ -176,14 +237,9 @@ public class FileToArchive extends Utility {
             int bufferSize = fileInputStream.read(buffer);
             String bitsResidue = null;
             while (bufferSize != -1) {
-                if (bitsResidue != null) {
-                    bitSequence.insert(0, bitsResidue);
-                    bitsResidue = null;
-                }
-                for (int i = 0; i < bufferSize; i++) {
-                    byte b = buffer[i];
-                    bitSequence.append(codingTable.get(b));
-                }
+                // Create a bit sequence with bytes using a coding table.
+                createBitSequence(bitSequence, buffer, bufferSize, bitsResidue);
+                bitsResidue = null;
                 int countOfBitsInLastByte = bitSequence.length() % COUNT_OF_BITS_IN_BYTE;
                 if (countOfBitsInLastByte != 0) {
                     bitsResidue = bitSequence.substring(bitSequence.length() -
@@ -202,6 +258,32 @@ public class FileToArchive extends Utility {
         }
     }
 
+    /**
+     * Create a bit sequence with bytes using a coding table.
+     *
+     * @param bitSequence     The string for storing the bit sequence.
+     * @param bytes           The array of bytes to convert to a bit sequence.
+     * @param iterationsCount The count of iterations for converting bytes to bit sequence.
+     * @param bitsResidue     The bits residue from the previous bit sequence.
+     */
+    private void createBitSequence(StringBuilder bitSequence, byte[] bytes,
+                                   int iterationsCount, String bitsResidue) {
+        if (bitsResidue != null) {
+            bitSequence.insert(0, bitsResidue);
+        }
+        for (int i = 0; i < iterationsCount; i++) {
+            byte oneByte = bytes[i];
+            bitSequence.append(codingTable.get(oneByte));
+        }
+    }
+
+    /**
+     * Write a bit sequence. The byte array is created from the bit sequence.
+     * Bytes are passed to the conveyor stream of PipedInputStream for writing to the file.
+     *
+     * @param pipedOutputStream The pipeline stream that transfers bytes to a pipeline stream PipedInputStream.
+     * @param bitSequence       The bit sequence with which to create an array of bytes.
+     */
     private void writeBitSequence(PipedOutputStream pipedOutputStream, StringBuilder
             bitSequence) throws IOException {
         if (bitSequence.length() >= COUNT_OF_BITS_IN_BYTE) {
@@ -216,6 +298,13 @@ public class FileToArchive extends Utility {
         }
     }
 
+    /**
+     * Write a bit residue. The byte array is created from the bit residue.
+     * Bytes are passed to the conveyor stream of PipedInputStream for writing to the file.
+     *
+     * @param pipedOutputStream The pipeline stream that transfers bytes to a pipeline stream PipedInputStream.
+     * @param bitsResidue       The bit residue with which to create an array of bytes.
+     */
     private void writeBitsResidue(PipedOutputStream pipedOutputStream, String bitsResidue)
             throws IOException {
         if (bitsResidue != null) {
@@ -232,6 +321,14 @@ public class FileToArchive extends Utility {
         }
     }
 
+    /**
+     * Get the bytes from the coding table. First, the length of the encoding table is written to the array.
+     * This length is translated into two bytes. The table key is a byte that is written to an array.
+     * Value - this is a binary bit coding, it is translated into two bytes.
+     * If the value is less than 16 bits, then one is first added to the 1, and then zeroes.
+     *
+     * @return The array of bytes from the coding table.
+     */
     private byte[] getBytesForCodingTable() {
         byte[] bytesFromCodingTable = new byte[codingTable.size() * 3 + 2];
         byte firstByte;
@@ -264,6 +361,12 @@ public class FileToArchive extends Utility {
         return bytesFromCodingTable;
     }
 
+    /**
+     * Create a new file name.
+     *
+     * @param fileName The name of the file from which the archive is created.
+     * @return The new file name.
+     */
     private String createNewFileName(String fileName) {
         return fileName + ADDITIONAL_ARCHIVE_EXTENSION;
     }
