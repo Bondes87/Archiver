@@ -1,4 +1,7 @@
-package com.shpp.dbondarenko;
+package com.shpp.dbondarenko.bds;
+
+import com.shpp.dbondarenko.model.HuffmanTreeNode;
+import com.shpp.dbondarenko.util.Utility;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -10,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * File: com.shpp.dbondarenko.FileToArchive.java
+ * File: com.shpp.dbondarenko.bds.FileToArchive.java
  * Class in which an archive is created from the file.
  * Created by Dmitro Bondarenko on 02.06.2017.
  */

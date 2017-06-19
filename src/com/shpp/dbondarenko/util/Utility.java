@@ -1,4 +1,4 @@
-package com.shpp.dbondarenko;
+package com.shpp.dbondarenko.util;
 
 import java.io.*;
 import java.util.Arrays;

@@ -1,4 +1,4 @@
-package com.shpp.dbondarenko;
+package com.shpp.dbondarenko.model;
 
 import java.util.ArrayList;
 
@@ -45,10 +45,6 @@ public class HuffmanTreeNode implements Comparable<HuffmanTreeNode> {
         return bytes;
     }
 
-    public void setBytes(ArrayList<Byte> bytes) {
-        this.bytes = bytes;
-    }
-
     public int getFrequency() {
         return frequency;
     }
@@ -61,15 +57,7 @@ public class HuffmanTreeNode implements Comparable<HuffmanTreeNode> {
         return LeftChild;
     }
 
-    public void setLeftChild(HuffmanTreeNode leftChild) {
-        LeftChild = leftChild;
-    }
-
     public HuffmanTreeNode getRightChild() {
         return RightChild;
-    }
-
-    public void setRightChild(HuffmanTreeNode rightChild) {
-        RightChild = rightChild;
     }
 }

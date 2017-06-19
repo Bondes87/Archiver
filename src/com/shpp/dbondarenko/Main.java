@@ -1,5 +1,10 @@
 package com.shpp.dbondarenko;
 
+import com.shpp.dbondarenko.bds.ArchiveToFile;
+import com.shpp.dbondarenko.bds.FileToArchive;
+import com.shpp.dbondarenko.zip.FileToZip;
+import com.shpp.dbondarenko.zip.ZipToFile;
+
 import java.util.Objects;
 
 /**
@@ -9,18 +14,33 @@ import java.util.Objects;
  */
 public class Main {
     public static void main(String[] args) {
-        if (args.length < 2) {
-            System.out.println("Specify the \"archive\" and \"unarchive\"");
+        if (args.length < 3) {
+            System.out.println("Specify the \"bds\" or \"zip\", \"archive\" or \"unarchive\" and name of file.");
         } else {
-            if (Objects.equals(args[0], "archive")) {
-                FileToArchive archive = new FileToArchive();
-                archive.createArchiveFromFile(args[1]);
-            } else if (Objects.equals(args[0], "unarchive")) {
-                ArchiveToFile archive = new ArchiveToFile();
-                archive.restoreFileFromArchive(args[1]);
+            if (Objects.equals(args[0], "bds")) {
+                if (Objects.equals(args[1], "archive")) {
+                    FileToArchive archive = new FileToArchive();
+                    archive.createArchiveFromFile(args[2]);
+                } else if (Objects.equals(args[1], "unarchive")) {
+                    ArchiveToFile archive = new ArchiveToFile();
+                    archive.restoreFileFromArchive(args[2]);
+                } else {
+                    System.out.println("Please, indicate what should be done: \"archive\" or \"unarchive\"");
+                }
+            } else if (Objects.equals(args[0], "zip")) {
+                if (Objects.equals(args[1], "archive")) {
+                    FileToZip zipArchive = new FileToZip();
+                    zipArchive.createZipFromFile(args[2]);
+                } else if (Objects.equals(args[1], "unarchive")) {
+                    ZipToFile archive = new ZipToFile();
+                    archive.restoreFileFromZip(args[2]);
+                } else {
+                    System.out.println("Please, indicate what should be done: \"archive\" or \"unarchive\"");
+                }
             } else {
-                System.out.println("Please, indicate what should be done: \"archive\" or \"unarchive\"");
+                System.out.println("Please indicate which archive type to work with: \"bds\" or \"zip\"");
             }
         }
     }
 }
+

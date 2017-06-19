@@ -1,4 +1,6 @@
-package com.shpp.dbondarenko;
+package com.shpp.dbondarenko.zip;
+
+import com.shpp.dbondarenko.util.Utility;
 
 import java.io.FileInputStream;
 import java.io.IOException;
