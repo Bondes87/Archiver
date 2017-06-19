@@ -27,7 +27,7 @@ public class FileToZip extends Utility {
             Thread readerThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    System.out.println("Please wait.");
+                    System.out.println(MESSAGE_PLEASE_WAIT);
                     readFile(fileName, pipedOutputStream);
                 }
             });
@@ -67,7 +67,7 @@ public class FileToZip extends Utility {
             }
             zipOutputStream.closeEntry();
             zipOutputStream.close();
-            System.out.println(MESSAGE_ARCHIVE_CREATED);
+            System.out.println(MESSAGE_ARCHIVE_CREATED + zipName);
         } catch (IOException e) {
 
             e.printStackTrace();
@@ -81,7 +81,6 @@ public class FileToZip extends Utility {
      * @return The zip archive name.
      */
     private String createZipName(String fileName) {
-        String[] nameAndExtension = fileName.split("\\.");
-        return nameAndExtension[0] + ZIP_FILE_EXTENSION;
+        return fileName + ZIP_FILE_EXTENSION;
     }
 }

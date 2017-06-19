@@ -30,7 +30,7 @@ public class Utility {
     // The constant that informs that the file was not found.
     public static final String MESSAGE_FILE_NOT_FOUND = "Sorry. Such file was not found.";
     // The constant that is responsible for ending the name of the new file.
-    public static final String ENDING_NAME_OF_NEW_FILE = "copy.";
+    public static final String ENDING_NAME_OF_NEW_FILE = "_copy.";
     // The constant responsible for expanding the archive.
     public static final String ZIP_FILE_EXTENSION = ".zip";
 
