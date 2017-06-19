@@ -4,7 +4,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * File: com.shpp.dbondarenko.FileToArchive.java
@@ -89,31 +92,6 @@ public class FileToArchive extends Utility {
         });
         codingFileThread.start();
         WriterThread.start();
-    }
-
-    /**
-     * Reads the bytes from the file and passes them to another pipeline stream.
-     *
-     * @param fileName The name of the file from which the archive is created.
-     * @param output   The pipeline stream that transfers bytes to a pipeline stream PipedInputStream.
-     */
-    private void readFile(String fileName, PipedOutputStream output) {
-        FileInputStream fileInputStream;
-        try {
-            fileInputStream = new FileInputStream(fileName);
-            byte[] buffer = new byte[BUFFER_SIZE_FOR_READING_AND_WRITING];
-            int bufferSize = fileInputStream.read(buffer);
-            while (bufferSize != -1) {
-                byte[] bytesToRead = Arrays.copyOfRange(buffer, 0, bufferSize);
-                output.write(bytesToRead);
-                bufferSize = fileInputStream.read(buffer);
-            }
-            fileInputStream.close();
-            output.close();
-        } catch (IOException e) {
-            System.out.println(MESSAGE_FILE_NOT_FOUND);
-            e.printStackTrace();
-        }
     }
 
     /**

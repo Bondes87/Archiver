@@ -1,9 +1,6 @@
 package com.shpp.dbondarenko;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PipedInputStream;
+import java.io.*;
 import java.util.Arrays;
 
 /**
@@ -34,6 +31,33 @@ public class Utility {
     public static final String MESSAGE_FILE_NOT_FOUND = "Sorry. Such file was not found.";
     // The constant that is responsible for ending the name of the new file.
     public static final String ENDING_NAME_OF_NEW_FILE = "copy.";
+    // The constant responsible for expanding the archive.
+    public static final String ZIP_FILE_EXTENSION = ".zip";
+
+    /**
+     * Reads the bytes from the file and passes them to another pipeline stream.
+     *
+     * @param fileName The name of the file from which the archive is created.
+     * @param output   The pipeline stream that transfers bytes to a pipeline stream PipedInputStream.
+     */
+    public static void readFile(String fileName, PipedOutputStream output) {
+        FileInputStream fileInputStream;
+        try {
+            fileInputStream = new FileInputStream(fileName);
+            byte[] buffer = new byte[BUFFER_SIZE_FOR_READING_AND_WRITING];
+            int bufferSize = fileInputStream.read(buffer);
+            while (bufferSize != -1) {
+                byte[] bytesToRead = Arrays.copyOfRange(buffer, 0, bufferSize);
+                output.write(bytesToRead);
+                bufferSize = fileInputStream.read(buffer);
+            }
+            fileInputStream.close();
+            output.close();
+        } catch (IOException e) {
+            System.out.println(MESSAGE_FILE_NOT_FOUND);
+            e.printStackTrace();
+        }
+    }
 
     /**
      * Writes data to a file. To operate the method, you need the conveyor stream PipedOutputStream,
