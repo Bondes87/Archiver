@@ -1,4 +1,4 @@
-package com.shpp.dbondarenko.zip;
+package com.shpp.dbondarenko.archiver.zip;
 
 import com.shpp.dbondarenko.util.Utility;
 
@@ -12,6 +12,7 @@ import java.util.zip.ZipInputStream;
 
 /**
  * File: ZipToFile.java
+ * Class in which the file from the zip archive is restored.
  * Created by Dmitro Bondarenko on 19.06.2017.
  */
 public class ZipToFile extends Utility {
@@ -21,26 +22,30 @@ public class ZipToFile extends Utility {
      * @param zipName The name of the zip archive from which to restore the file.
      */
     public void restoreFileFromZip(String zipName) {
-        try {
-            final PipedOutputStream pipedOutputStream = new PipedOutputStream();
-            final PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
-            Thread zipReaderThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    readZip(zipName, pipedOutputStream);
-                }
-            });
-            Thread writerThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    writeFile(createFileName(zipName), pipedInputStream,
-                            MESSAGE_FILE_CREATED, MESSAGE_FILE_COULD_NOT_BE_RESTORED);
-                }
-            });
-            zipReaderThread.start();
-            writerThread.start();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (isFileExist(zipName)) {
+            try {
+                final PipedOutputStream pipedOutputStream = new PipedOutputStream();
+                final PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
+                Thread zipReaderThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        readZip(zipName, pipedOutputStream);
+                    }
+                });
+                Thread writerThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        writeFile(createFileName(zipName), pipedInputStream,
+                                MESSAGE_FILE_CREATED, MESSAGE_FILE_COULD_NOT_BE_RESTORED);
+                    }
+                });
+                zipReaderThread.start();
+                writerThread.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println(MESSAGE_FILE_NOT_FOUND);
         }
     }
 

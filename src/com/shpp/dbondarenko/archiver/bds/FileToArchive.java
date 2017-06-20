@@ -1,4 +1,4 @@
-package com.shpp.dbondarenko.bds;
+package com.shpp.dbondarenko.archiver.bds;
 
 import com.shpp.dbondarenko.model.HuffmanTreeNode;
 import com.shpp.dbondarenko.util.Utility;
@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * File: com.shpp.dbondarenko.bds.FileToArchive.java
+ * File: FileToArchive.java
  * Class in which an archive is created from the file.
  * Created by Dmitro Bondarenko on 02.06.2017.
  */
@@ -27,12 +27,16 @@ public class FileToArchive extends Utility {
      * @param fileName The name of the file from which the archive is created.
      */
     public void createArchiveFromFile(String fileName) {
-        try {
-            System.out.println(MESSAGE_PLEASE_WAIT);
-            createCodingTable(fileName);
-            encodeFile(fileName);
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+        if (isFileExist(fileName)) {
+            try {
+                System.out.println(MESSAGE_PLEASE_WAIT);
+                createCodingTable(fileName);
+                encodeFile(fileName);
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println(MESSAGE_FILE_NOT_FOUND);
         }
     }
 

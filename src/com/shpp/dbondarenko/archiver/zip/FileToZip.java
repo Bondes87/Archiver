@@ -1,4 +1,4 @@
-package com.shpp.dbondarenko.zip;
+package com.shpp.dbondarenko.archiver.zip;
 
 import com.shpp.dbondarenko.util.Utility;
 
@@ -23,26 +23,30 @@ public class FileToZip extends Utility {
      * @param fileName The name of the file from which the zip archive is created.
      */
     public void createZipFromFile(String fileName) {
-        try {
-            final PipedOutputStream pipedOutputStream = new PipedOutputStream();
-            final PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
-            Thread readerThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    System.out.println(MESSAGE_PLEASE_WAIT);
-                    readFile(fileName, pipedOutputStream);
-                }
-            });
-            Thread zipWriterThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    writeToZip(createZipName(fileName), fileName, pipedInputStream);
-                }
-            });
-            readerThread.start();
-            zipWriterThread.start();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (isFileExist(fileName)) {
+            try {
+                final PipedOutputStream pipedOutputStream = new PipedOutputStream();
+                final PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
+                Thread readerThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        System.out.println(MESSAGE_PLEASE_WAIT);
+                        readFile(fileName, pipedOutputStream);
+                    }
+                });
+                Thread zipWriterThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        writeToZip(createZipName(fileName), fileName, pipedInputStream);
+                    }
+                });
+                readerThread.start();
+                zipWriterThread.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println(MESSAGE_FILE_NOT_FOUND);
         }
     }
 

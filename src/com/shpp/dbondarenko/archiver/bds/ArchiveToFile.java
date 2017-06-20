@@ -1,4 +1,4 @@
-package com.shpp.dbondarenko.bds;
+package com.shpp.dbondarenko.archiver.bds;
 
 import com.shpp.dbondarenko.util.Utility;
 
@@ -25,38 +25,42 @@ public class ArchiveToFile extends Utility {
      * @param archiveName The name of the archive from which to restore the file.
      */
     public void restoreFileFromArchive(String archiveName) {
-        try {
-            final PipedOutputStream pipedOutputStream = new PipedOutputStream();
-            final PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
-            Thread ReaderThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    FileInputStream fileInputStream;
-                    try {
-                        System.out.println(MESSAGE_PLEASE_WAIT);
-                        fileInputStream = new FileInputStream(archiveName);
-                        int countByteOfTable = getCountByteOfTable(fileInputStream);
-                        restoreDecodingTable(fileInputStream, countByteOfTable);
-                        decodeArchive(fileInputStream, pipedOutputStream);
-                        fileInputStream.close();
-                        pipedOutputStream.close();
-                    } catch (IOException e) {
-                        System.out.println(MESSAGE_FILE_NOT_FOUND);
-                        e.printStackTrace();
+        if (isFileExist(archiveName)) {
+            try {
+                final PipedOutputStream pipedOutputStream = new PipedOutputStream();
+                final PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
+                Thread ReaderThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        FileInputStream fileInputStream;
+                        try {
+                            System.out.println(MESSAGE_PLEASE_WAIT);
+                            fileInputStream = new FileInputStream(archiveName);
+                            int countByteOfTable = getCountByteOfTable(fileInputStream);
+                            restoreDecodingTable(fileInputStream, countByteOfTable);
+                            decodeArchive(fileInputStream, pipedOutputStream);
+                            fileInputStream.close();
+                            pipedOutputStream.close();
+                        } catch (IOException e) {
+                            System.out.println(MESSAGE_FILE_NOT_FOUND);
+                            e.printStackTrace();
+                        }
                     }
-                }
-            });
-            Thread WriterThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    writeFile(createFileName(archiveName), pipedInputStream,
-                            MESSAGE_FILE_CREATED, MESSAGE_FILE_COULD_NOT_BE_RESTORED);
-                }
-            });
-            ReaderThread.start();
-            WriterThread.start();
-        } catch (IOException e) {
-            e.printStackTrace();
+                });
+                Thread WriterThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        writeFile(createFileName(archiveName), pipedInputStream,
+                                MESSAGE_FILE_CREATED, MESSAGE_FILE_COULD_NOT_BE_RESTORED);
+                    }
+                });
+                ReaderThread.start();
+                WriterThread.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println(MESSAGE_FILE_NOT_FOUND);
         }
     }
 

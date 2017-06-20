@@ -1,9 +1,9 @@
 package com.shpp.dbondarenko;
 
-import com.shpp.dbondarenko.bds.ArchiveToFile;
-import com.shpp.dbondarenko.bds.FileToArchive;
-import com.shpp.dbondarenko.zip.FileToZip;
-import com.shpp.dbondarenko.zip.ZipToFile;
+import com.shpp.dbondarenko.archiver.bds.ArchiveToFile;
+import com.shpp.dbondarenko.archiver.bds.FileToArchive;
+import com.shpp.dbondarenko.archiver.zip.FileToZip;
+import com.shpp.dbondarenko.archiver.zip.ZipToFile;
 
 import java.util.Objects;
 
